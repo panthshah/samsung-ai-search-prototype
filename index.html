@@ -1,0 +1,1883 @@
+<title>Samsung AI Search</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Outfit:wght@700&display=swap");
+/* Layout: samsung.com shell (GNB, search popup, search results page) with an AI answer module above the existing results grid and a pinned ask bar. Single light theme, matching the live site. */
+:root{
+  --black:#000; --white:#fff; --gray-text:#555; --disabled:#757575; --stroke:#8F8F8F;
+  --divider:#DDDDDD; --fill:#EEEEEE; --bg-gray:#F7F7F7; --snack:#313131;
+  --blue:#2189FF; --blue-press:#006BEA; --blue-tint:#EAF3FF; --sale:#D6001C;
+  --display:"Samsung Sharp Sans","SamsungSharpSans","Outfit",system-ui,sans-serif;
+  --body:"SamsungOne","Samsung One","Noto Sans",system-ui,sans-serif;
+  --r-chip:4px; --r-card:8px; --r-btn:20px; --r-pop:24px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{background:var(--white);color:var(--black)}
+body{font-family:var(--body);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:24px}
+@media (max-width:760px){.wrap{padding-inline:16px}}
+
+/* prototype strip (not part of samsung.com) */
+.proto{background:#111;color:#cfcfcf;font-size:12px}
+.proto .wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-block:7px}
+.proto b{color:#fff;font-weight:700;margin-right:4px}
+.proto button{background:#2a2a2a;border:1px solid #3a3a3a;color:#eee;border-radius:14px;padding:3px 10px;font-size:12px}
+.proto button:hover{background:#3a3a3a}
+.proto .notes{margin-left:auto;background:var(--blue);border-color:var(--blue);color:#fff}
+@media (max-width:760px){.proto .notes{margin-left:0}}
+
+/* GNB */
+.util{font-size:12px;display:flex;justify-content:flex-end;gap:18px;padding-top:8px}
+.gnb{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--white);border-bottom:1px solid var(--divider)}
+.gnb-row{display:flex;align-items:center;gap:28px;height:56px}
+.logo{font-family:var(--display);font-weight:800;letter-spacing:.18em;font-size:21px;background:none;border:0;padding:0}
+.nav{display:flex;gap:22px;font-weight:700;font-size:13.5px;flex:1;min-width:0;overflow:hidden;white-space:nowrap}
+.nav span{cursor:pointer}
+.icons{display:flex;gap:16px;align-items:center;margin-left:auto}
+.ibtn{background:none;border:0;padding:6px;display:grid;place-items:center;border-radius:50%}
+.ibtn:hover{background:var(--fill)}
+.ibtn svg{width:22px;height:22px}
+.burger{display:none}
+@media (max-width:1000px){.nav{display:none}.util{display:none}.burger{display:grid}}
+
+/* search popup (unchanged from live site) */
+.pop-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50}
+.pop{position:fixed;left:0;right:0;top:0;background:var(--white);z-index:51;padding-block:28px 40px;max-height:100%;overflow:auto;animation:drop .22s ease-out}
+@keyframes drop{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+.pop-head{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--divider);padding-bottom:16px}
+.pop-head svg{width:30px;height:30px;flex:none}
+.pop-head input{flex:1;min-width:0;border:0;outline:0;font-family:var(--display);font-weight:600;font-size:40px;color:var(--black);background:transparent}
+.pop-head input::placeholder{color:#777}
+.pop-body{display:grid;grid-template-columns:minmax(200px,26%) 1fr;gap:32px;padding-top:26px}
+.eyebrow{font-weight:700;font-size:13px;letter-spacing:.02em;color:var(--gray-text);text-transform:uppercase;margin:0 0 14px}
+.recent{display:inline-flex;align-items:center;gap:8px;background:var(--bg-gray);border-radius:20px;padding:8px 14px;border:0;font-size:14px}
+.recent i{font-style:normal;color:#888}
+.recs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rec{background:none;border:0;padding:0;text-align:left}
+.rec .im{background:var(--bg-gray);border-radius:var(--r-card);aspect-ratio:1;display:grid;place-items:center;max-width:100%}
+.rec .im svg{width:70%;height:70%}
+.rec b{display:block;font-family:var(--display);font-size:18px;margin-top:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec span{font-weight:700;font-size:16px}
+.sugg{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.sugg button{width:100%;text-align:left;background:none;border:0;padding:9px 6px;font-size:17px;display:flex;gap:10px;align-items:center;border-radius:6px}
+.sugg button:hover,.sugg button.on{background:var(--bg-gray)}
+.sugg mark{background:none;font-weight:700;color:#000}
+.sugg .ask{color:var(--blue-press)}
+.sugg svg{width:16px;height:16px;flex:none}
+@media (max-width:760px){
+  .pop{bottom:0;padding-block:16px 24px}
+  .pop-head input{font-size:24px}
+  .pop-body{grid-template-columns:1fr}
+  .recs{grid-template-columns:repeat(2,1fr)}
+  .rec b{font-size:15px}
+}
+
+/* home */
+.hero{background:linear-gradient(160deg,#0d0f14,#1e2633 70%,#2e3a4d);color:#fff;border-radius:0;padding-block:64px;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center}
+.hero h1{font-family:var(--display);font-size:clamp(34px,5vw,60px);line-height:1.05;margin:0 0 12px;text-wrap:balance}
+.hero p{font-size:17px;opacity:.85;margin:0 0 22px}
+.hero .art svg{width:100%;max-height:340px}
+.btn{height:39px;border-radius:var(--r-btn);padding:0 22px;font-weight:700;font-size:14px;border:1px solid var(--black);background:var(--white);color:var(--black);display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn.fill{background:var(--black);color:var(--white)}
+.btn.inv{background:#fff;color:#000;border-color:#fff}
+.btn.ghost-inv{background:transparent;color:#fff;border-color:#fff}
+.btn:hover{opacity:.85}
+.cats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding-block:40px}
+.cat{background:var(--bg-gray);border-radius:16px;padding:18px 12px;text-align:center;border:0;font-weight:700}
+.cat svg{width:64px;height:64px;display:block;margin:0 auto 8px}
+.home-hint{padding-block:0 60px;color:var(--gray-text)}
+@media (max-width:760px){.hero .wrap{grid-template-columns:1fr}.cats{grid-template-columns:repeat(3,1fr)}}
+
+/* search page */
+.sp-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:16px;padding-top:18px;border-bottom:1px solid var(--divider)}
+.sp-top .rf{padding-bottom:14px;font-size:14px;min-width:0}
+.sp-top .rf b{font-weight:700}
+.tabs{display:flex;gap:26px;overflow-x:auto;scrollbar-width:none}
+.tab{background:none;border:0;padding:12px 0;font-weight:700;font-size:15px;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{border-color:var(--black)}
+.tab:hover{color:var(--gray-text)}
+@media (max-width:760px){.sp-top{grid-template-columns:1fr}.sp-top .rf{padding-bottom:0}.tab{font-size:14px}}
+
+/* AI module */
+.ai{margin-top:20px;background:var(--bg-gray);border-radius:var(--r-pop);padding:24px 28px 22px;position:relative}
+.ai-head{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+.spark{width:20px;height:20px;flex:none}
+.beta{font-size:11px;font-weight:700;border:1px solid var(--stroke);border-radius:var(--r-chip);padding:0 5px;color:var(--gray-text)}
+.ai-head .tools{margin-left:auto;display:flex;gap:12px;align-items:center}
+.linkbtn{background:none;border:0;padding:0;text-decoration:underline;font-size:13px;font-weight:700}
+.tip{position:relative}
+.tip-box{position:absolute;right:0;top:26px;width:300px;max-width:80vw;background:var(--white);border:1px solid rgba(0,0,0,.15);border-radius:6px;padding:10px 12px;font-size:12px;font-weight:400;z-index:5;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.ai-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:40px;margin-top:14px}
+@media (max-width:1000px){.ai-grid{grid-template-columns:minmax(0,1fr);gap:22px}}
+@media (max-width:760px){.ai{padding:18px 16px;border-radius:16px;margin-inline:-4px}}
+.history{display:grid;gap:6px;margin-bottom:14px}
+.hist{background:var(--white);border:1px solid var(--divider);border-radius:var(--r-card);padding:8px 12px;text-align:left;font-size:13px;display:flex;gap:10px;align-items:baseline;width:100%}
+.hist b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.hist span{color:var(--gray-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.q{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.2;margin:0 0 12px;text-wrap:balance}
+.lead{font-size:19px;line-height:1.55;margin:0;max-width:68ch}
+.lead strong{font-weight:700}
+.cursor{display:inline-block;width:8px;height:18px;background:var(--blue);vertical-align:-3px;margin-left:2px;animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.thinking{display:grid;gap:7px;margin:4px 0 6px}
+.think{display:flex;gap:9px;align-items:center;font-size:14px;color:var(--gray-text)}
+.think .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--divider);border-top-color:var(--blue);animation:spin .8s linear infinite}
+.think.done .dot{animation:none;border:0;background:var(--black);display:grid;place-items:center}
+.think.done .dot::after{content:"";width:7px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lin{height:4px;background:var(--divider);border-radius:2px;overflow:hidden;margin:2px 0 10px;max-width:420px}
+.lin i{display:block;height:100%;width:40%;background:var(--blue);animation:ind 1.1s ease-in-out infinite}
+@keyframes ind{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+.bul{margin:14px 0 0;padding-left:20px;display:grid;gap:8px;font-size:15.5px;max-width:68ch}
+.bul li::marker{color:var(--stroke)}
+.reveal{animation:fade .35s ease-out both}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.picks-h{font-weight:700;font-size:14px;margin:22px 0 10px}
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.picks{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78%;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}.picks>*{scroll-snap-align:start}}
+.pick{background:var(--white);border-radius:16px;padding:14px;display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;border:1px solid transparent;text-align:left;align-items:start}
+.pick:hover{border-color:var(--black)}
+.pick .im{background:var(--bg-gray);border-radius:var(--r-card);aspect-ratio:1;display:grid;place-items:center}
+.pick .im svg{width:78%;height:78%}
+.tag{display:inline-block;color:var(--blue-press);font-weight:700;font-size:12px;background:var(--blue-tint);border-radius:var(--r-chip);padding:2px 6px;margin-bottom:5px}
+.pick h4{margin:0;font-size:14px;line-height:1.3;font-weight:700}
+.pick .why{font-size:12.5px;color:var(--gray-text);margin:4px 0 6px}
+.pick .pr{font-weight:700}
+.pick .pr s{font-weight:400;color:var(--disabled);font-size:12px;margin-left:4px}
+.spec-wrap{overflow-x:auto;margin-top:18px;border-radius:var(--r-card)}
+table.spec{border-collapse:separate;border-spacing:0;width:100%;min-width:520px;font-size:14.5px}
+table.spec th,table.spec td{padding:12px 14px;text-align:left;vertical-align:top}
+table.spec thead th{font-weight:700;background:var(--white);border-bottom:1px solid var(--divider)}
+table.spec tbody tr:nth-child(odd) td,table.spec tbody tr:nth-child(odd) th{background:var(--white)}
+table.spec tbody tr:nth-child(even) td,table.spec tbody tr:nth-child(even) th{background:var(--bg-gray)}
+table.spec tbody th{font-weight:700;width:150px}
+table.spec .win{font-weight:700}
+table.spec .win::after{content:" ●";color:var(--blue);font-size:10px;vertical-align:2px}
+.reviews{display:grid;gap:10px;margin-top:16px;max-width:560px}
+.rv{display:grid;grid-template-columns:150px 1fr 44px;gap:10px;align-items:center;font-size:14px}
+.rv .bar{height:4px;background:var(--divider);border-radius:2px;overflow:hidden}
+.rv .bar i{display:block;height:100%;background:var(--blue)}
+.rv em{font-style:normal;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.quote{margin:14px 0 0;padding:12px 14px;background:var(--white);border-radius:var(--r-card);font-size:14px;max-width:560px}
+.quote cite{display:block;font-style:normal;color:var(--gray-text);font-size:12px;margin-top:4px}
+.stepper{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:0;max-width:620px}
+.stepper li{display:grid;grid-template-columns:24px 1fr;gap:12px;position:relative;padding-bottom:16px}
+.stepper li:not(:last-child)::before{content:"";position:absolute;left:11px;top:26px;bottom:2px;width:2px;background:var(--divider)}
+.stepper .n{width:24px;height:24px;border-radius:50%;background:var(--stroke);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center}
+.stepper li.cur .n{background:var(--blue-press)}
+.stepper li.ok .n{background:var(--black)}
+.stepper li.cur b{font-weight:700}
+.stepper p{margin:2px 0 0;color:var(--gray-text);font-size:14px}
+.fixq{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;font-weight:700}
+.handoff{margin-top:16px;background:var(--white);border-radius:16px;padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;max-width:640px}
+.handoff .av{width:44px;height:44px;border-radius:50%;background:var(--black);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.handoff .tx{flex:1;min-width:200px}
+.handoff .tx b{display:block}
+.handoff .tx span{color:var(--gray-text);font-size:13px}
+.handoff .act{display:flex;gap:8px;flex-wrap:wrap}
+.src{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:18px;font-size:12.5px}
+.src b{font-weight:700;margin-right:2px}
+.src a{background:var(--white);border:1px solid var(--divider);border-radius:14px;padding:3px 10px;text-decoration:none}
+.src a:hover{border-color:var(--black)}
+.foot{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--gray-text)}
+.thumb{background:var(--white);border:1px solid var(--divider);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;padding:0}
+.thumb svg{width:15px;height:15px}
+.thumb.on{background:var(--black);border-color:var(--black);color:#fff}
+.side h5{font-size:14px;font-weight:700;margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--white);border:1px solid var(--divider);border-radius:20px;padding:8px 14px;font-size:14px;text-align:left;line-height:1.3}
+.chip:hover{border-color:var(--black)}
+.side .chips{flex-direction:column;align-items:stretch}
+.side .chip{border-radius:12px;display:flex;gap:8px;align-items:center}
+.side .chip svg{width:14px;height:14px;flex:none;color:var(--blue-press)}
+.side .human{margin-top:18px;padding-top:14px;border-top:1px solid var(--divider);font-size:13px}
+.ai-mini{margin-top:20px;background:var(--bg-gray);border-radius:16px;padding:14px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ai-mini b{font-weight:700}
+.ai-mini .chips{flex:1}
+.collapsed-ai{margin-top:20px;display:flex;gap:10px;align-items:center;background:var(--bg-gray);border-radius:16px;padding:12px 18px;font-weight:700;width:100%;border:0;text-align:left}
+
+/* results */
+.res-bar{display:flex;align-items:center;gap:16px;padding-block:22px 10px}
+.res-bar .fl{font-weight:700;background:none;border:0;padding:0;display:flex;gap:6px;align-items:center}
+.res-bar .count{font-weight:700}
+.res-bar .sort{margin-left:auto;display:flex;align-items:center;gap:8px;font-weight:700}
+.res-bar select{font-family:inherit;font-size:14px;border:0;background:none;font-weight:400;padding:4px}
+.applied{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:12px}
+.applied:empty{display:none}
+.applied .lbl{font-size:12.5px;color:var(--gray-text);display:flex;gap:5px;align-items:center}
+.applied .lbl svg{width:13px;height:13px}
+.fchip{border:1px solid var(--black);border-radius:var(--r-chip);padding:4px 8px;font-size:13px;font-weight:700;background:var(--white);display:inline-flex;gap:6px;align-items:center}
+.fchip i{font-style:normal;font-weight:400}
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:40px;padding-bottom:140px}
+.filters{font-size:14px}
+.fg{border-top:1px solid var(--divider);padding-block:14px}
+.fg:first-child{border-top:0;padding-top:0}
+.fg h6{margin:0 0 10px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;display:flex;justify-content:space-between}
+.cb{display:flex;gap:10px;align-items:center;padding:5px 0;cursor:pointer}
+.cb input{appearance:none;width:20px;height:20px;border:1px solid var(--stroke);border-radius:4px;margin:0;display:grid;place-items:center;background:var(--white);flex:none}
+.cb input:checked{background:var(--black);border-color:var(--black)}
+.cb input:checked::after{content:"";width:9px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.cb small{color:var(--disabled);margin-left:auto}
+.range input{width:100%;accent-color:var(--black)}
+.range .vals{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+.range .vals span{border:1px solid var(--divider);border-radius:var(--r-chip);padding:5px 8px;font-size:13px;font-variant-numeric:tabular-nums}
+.sheet-head{display:none}
+@media (max-width:1000px){
+  .layout{grid-template-columns:1fr}
+  .filters{display:none}
+  .filters.open{display:block;position:fixed;left:0;right:0;bottom:0;max-height:82%;overflow:auto;background:var(--white);z-index:60;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+  .filters.open .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .sheet-head b{font-family:var(--display);font-size:20px}
+}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 20px}
+@media (max-width:1200px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.grid{gap:28px 12px}}
+.pcard{display:flex;flex-direction:column;gap:6px;min-width:0;border-radius:var(--r-card);transition:box-shadow .3s}
+.pcard.flash{box-shadow:0 0 0 2px var(--blue);}
+.pcard .im{background:var(--bg-gray);border-radius:var(--r-card);aspect-ratio:1;display:grid;place-items:center;position:relative;margin-bottom:10px}
+.pcard .im svg{width:62%;height:62%}
+.pcard .im .tag{position:absolute;left:10px;top:10px;margin:0;background:var(--white)}
+.pcard h3{margin:0;font-size:17px;line-height:1.3;font-weight:700}
+.pcard .sub{margin:0;color:var(--black);font-size:13.5px}
+.pcard .rt{font-size:13px;display:flex;gap:4px;align-items:center}
+.pcard .rt svg{width:13px;height:13px}
+.pcard .clr{font-size:12px;color:var(--gray-text);margin-top:8px}
+.sw{display:flex;gap:8px}
+.sw i{width:24px;height:24px;border-radius:50%;border:1px solid var(--divider);display:block}
+.sw i.on{box-shadow:0 0 0 2px var(--white),0 0 0 3px var(--black)}
+.opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.opt{border:1px solid var(--divider);border-radius:var(--r-chip);padding:5px 8px;font-size:12px;background:var(--white)}
+.opt.on{border-color:var(--black);font-weight:700}
+.price{font-weight:700;font-size:18px;margin-top:8px}
+.price s{font-weight:400;font-size:13px;color:var(--disabled);margin-left:4px}
+.price em{display:block;font-style:normal;font-weight:400;font-size:12px;color:var(--sale)}
+.sku{font-size:11px;color:var(--disabled)}
+.pcard .btn{width:100%;margin-top:4px}
+.pcard .row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:13px;gap:8px;flex-wrap:wrap}
+.pcard .row a{font-weight:700}
+.cmp{display:flex;gap:6px;align-items:center;cursor:pointer}
+.cmp input{appearance:none;width:18px;height:18px;border:1px solid var(--stroke);border-radius:4px;margin:0;display:grid;place-items:center}
+.cmp input:checked{background:var(--black);border-color:var(--black)}
+.cmp input:checked::after{content:"";width:8px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+@media (max-width:560px){.pcard h3{font-size:14.5px}.pcard .sub{font-size:12px}.price{font-size:16px}.pcard .btn{height:36px;font-size:13px;padding:0 8px}}
+.more{display:flex;justify-content:center;margin-top:36px}
+.empty{grid-column:1/-1;background:var(--bg-gray);border-radius:16px;padding:30px;text-align:center}
+.support-list{display:grid;gap:12px}
+.sart{border:1px solid var(--divider);border-radius:16px;padding:18px;display:grid;gap:4px}
+.sart b{font-size:16px}
+.sart span{color:var(--gray-text);font-size:13px}
+
+/* footer */
+.site-foot{border-top:1px solid var(--divider);padding-block:36px 120px;font-size:12px;color:var(--gray-text)}
+.site-foot .cols{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;margin-bottom:24px}
+.site-foot h6{font-size:13px;color:var(--black);margin:0 0 8px;text-transform:uppercase}
+.site-foot p{margin:4px 0}
+@media (max-width:760px){.site-foot .cols{grid-template-columns:repeat(2,1fr)}}
+
+/* bottom: compare tray + ask bar */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:0 16px calc(14px + env(safe-area-inset-bottom,0px));pointer-events:none;display:grid;justify-items:center;gap:8px}
+.dock>*{pointer-events:auto;width:100%;max-width:760px}
+.tray{background:var(--white);border:1px solid var(--divider);border-radius:16px;padding:10px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.08);flex-wrap:wrap}
+.tray .th{display:flex;gap:6px}
+.tray .th span{width:42px;height:42px;border-radius:8px;background:var(--bg-gray);display:grid;place-items:center}
+.tray .th svg{width:80%;height:80%}
+.tray .tt{flex:1;min-width:120px;font-size:13px}
+.tray .tt b{display:block;font-size:14px}
+.ask{background:var(--white);border:1px solid var(--divider);border-radius:30px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 18px;box-shadow:0 8px 28px rgba(0,0,0,.12)}
+.ask:focus-within{border-color:var(--black)}
+.ask input{flex:1;min-width:0;border:0;outline:0;font-size:16px;padding:10px 0;font-family:inherit;background:transparent}
+.ask .send{width:42px;height:42px;border-radius:50%;border:0;background:var(--divider);display:grid;place-items:center;flex:none}
+.ask .send.ready{background:var(--black);color:#fff}
+.ask .send svg{width:18px;height:18px}
+.ask .mic{background:none;border:0;padding:6px;display:grid;place-items:center}
+.ask .mic svg{width:20px;height:20px}
+.disc{font-size:11px;color:var(--gray-text);text-align:center;background:rgba(255,255,255,.9);border-radius:8px;padding:2px 6px;justify-self:center;width:auto!important}
+
+.snack{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--snack);color:#fff;border-radius:6px;padding:12px 16px;display:flex;gap:18px;align-items:center;z-index:70;font-size:14px;max-width:calc(100% - 32px);animation:fade .25s}
+.snack button{background:none;border:0;color:#fff;font-weight:700;text-decoration:underline;padding:0}
+
+/* design notes side sheet */
+.ns-scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:80}
+.ns{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--white);z-index:81;overflow:auto;padding:28px 28px calc(40px + env(safe-area-inset-bottom,0px));animation:slide .25s ease-out}
+@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.ns h2{font-family:var(--display);font-size:28px;margin:0 0 6px}
+.ns h3{font-size:16px;margin:26px 0 10px}
+.ns p,.ns li{font-size:14px;line-height:1.55}
+.ns ol,.ns ul{padding-left:20px;display:grid;gap:6px}
+.ns table{width:100%;border-collapse:collapse;font-size:13px}
+.ns td,.ns th{border-top:1px solid var(--divider);padding:8px 6px;text-align:left;vertical-align:top}
+.ns th{font-weight:700}
+.ns .x{position:absolute;right:16px;top:16px}
+.ns .tw{overflow-x:auto}
+
+/* ---- v2: layouts */
+.proto .seg{display:inline-flex;gap:4px;align-items:center;margin-right:10px;padding-right:12px;border-right:1px solid #333}
+.proto .seg>span{margin-right:4px}
+.proto button.on{background:#fff;color:#000;border-color:#fff;font-weight:700}
+.ctitle{display:flex;gap:12px;align-items:baseline;justify-content:space-between;padding-top:14px;font-size:14px;min-width:0}
+.ctitle .tools{display:flex;gap:14px;align-items:center}
+.ctitle .cnt{color:var(--gray-text)}
+.ctop{position:sticky;top:var(--gnbh,82px);z-index:20;background:var(--white);border-bottom:1px solid var(--divider)}
+.csticky{position:sticky;top:var(--gnbh,82px);z-index:20;background:var(--white)}
+.fbar{display:flex;gap:8px;align-items:center;padding-block:12px;overflow-x:auto;scrollbar-width:none}
+.fbar::-webkit-scrollbar{display:none}
+.fbtn{flex:none;border:1px solid var(--divider);background:var(--white);border-radius:20px;padding:7px 12px 7px 14px;font-size:13.5px;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.fbtn:hover{border-color:var(--black)}
+.fbtn.on{border-color:var(--black);font-weight:700}
+.fbtn.plain{border-color:transparent}
+.fbtn svg{width:14px;height:14px}
+.fbtn svg:first-child:not(:last-child){color:var(--blue-press);width:13px;height:13px}
+.fdiv{width:1px;height:22px;background:var(--divider);flex:none}
+.fsp{flex:1;min-width:8px}
+.fmenu{position:fixed;z-index:95;background:var(--white);border:1px solid var(--divider);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;min-width:230px;display:grid}
+.fmenu button{background:none;border:0;text-align:left;padding:9px 10px;border-radius:6px;font-size:14px;display:flex;gap:10px;align-items:center}
+.fmenu button:hover{background:var(--bg-gray)}
+.fmenu i{width:18px;height:18px;border:1px solid var(--stroke);border-radius:50%;flex:none;display:grid;place-items:center}
+.fmenu button.on{font-weight:700}
+.fmenu button.on i{border:6px solid var(--black)}
+.fmenu button.multi i{border-radius:4px}
+.fmenu button.multi.on i{border:0;background:var(--black)}
+.fmenu button.multi.on i::after{content:"";width:8px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.thread{max-width:1120px;margin:0 auto;padding-block:28px 240px;display:grid;gap:44px}
+.turn{display:grid;align-content:start;gap:16px;scroll-margin-top:calc(var(--gnbh,82px) + 120px);min-width:0}
+.ubub{justify-self:end;background:var(--bg-gray);border-radius:20px 20px 4px 20px;padding:11px 18px;font-size:16px;max-width:min(560px,85%)}
+.abub{display:grid;gap:10px;min-width:0}
+.who{display:flex;gap:8px;align-items:center;font-weight:700;font-size:14px}
+.ans{min-width:0}
+.next h5,.side h5{font-size:14px;font-weight:700;margin:6px 0 10px}
+.next .chips .chip{display:flex;gap:8px;align-items:center}
+.next .chips .chip svg,.side .chip svg{width:14px;height:14px;flex:none;color:var(--blue-press)}
+.human{margin-top:16px;padding-top:12px;border-top:1px solid var(--divider);font-size:13px}
+.next .human{border-top:0;padding-top:0;margin-top:12px}
+.note{font-size:12px;color:var(--gray-text);margin:6px 0 0}
+.prow-h{display:flex;gap:10px;align-items:baseline;margin:24px 0 12px}
+.prow-h b{font-size:15px}
+.prow-h span{color:var(--gray-text);font-size:13px}
+.prow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.mcard{background:var(--white);border:1px solid var(--divider);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:5px;min-width:0;scroll-snap-align:start}
+.mcard:hover{border-color:var(--black)}
+.mcard .im{background:var(--bg-gray);border-radius:var(--r-card);aspect-ratio:1;display:grid;place-items:center;position:relative;margin-bottom:6px}
+.mcard .im svg{width:72%;height:72%}
+.mcard .im .tag{position:absolute;left:8px;top:8px;margin:0;background:var(--white)}
+.mcard h4{margin:0;font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mcard .sub{margin:0;font-size:12px;color:var(--gray-text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mcard .rt{font-size:12px;display:flex;gap:4px;align-items:center}
+.mcard .rt svg{width:12px;height:12px}
+.mcard .price{font-size:15px;margin-top:auto;padding-top:6px}
+.mcard .price s{font-size:12px}
+.mcard .btn{height:34px;font-size:13px;width:100%;margin-top:4px}
+.mcard .cmp{font-size:12.5px;margin-top:4px}
+.prow-more{display:flex;gap:18px;align-items:center;margin-top:16px;flex-wrap:wrap}
+@media (max-width:1100px){.prow:not(.expanded){grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(180px,32%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}.prow.expanded{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:600px){.prow:not(.expanded){grid-auto-columns:58%}.prow.expanded{grid-template-columns:repeat(2,minmax(0,1fr))}.thread{padding-block:20px 220px;gap:36px}.ubub{font-size:15px}.ctitle .tools .tip{display:none}}
+.reslink{display:flex;gap:10px;align-items:center;background:var(--white);border:1px solid var(--divider);border-radius:12px;padding:10px 14px;margin-top:14px;font-size:14px;text-align:left;width:100%}
+.reslink svg{width:16px;height:16px;color:var(--blue-press);flex:none}
+.mseg{display:none}
+.split{display:grid;grid-template-columns:minmax(360px,34%) minmax(0,1fr)}
+.sp-chat{position:sticky;top:var(--gnbh,82px);height:calc(100vh - var(--gnbh,82px));display:flex;flex-direction:column;border-right:1px solid var(--divider);background:var(--white);min-width:0}
+.sp-head{display:flex;gap:8px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--divider);font-size:15px}
+.sp-head .linkbtn{margin-left:auto}
+.sp-thread{flex:1;overflow:auto;padding:20px;display:grid;gap:30px;align-content:start;min-width:0}
+.sp-thread .turn{gap:12px}
+.sp-thread .lead{font-size:16px}
+.sp-thread .bul{font-size:14.5px}
+.sp-thread .q{display:none}
+.sp-thread .ubub{font-size:14.5px}
+.sp-thread .spec-wrap table.spec{min-width:0;font-size:13px}
+.sp-thread table.spec th,.sp-thread table.spec td{padding:9px 10px}
+.sp-thread table.spec tbody th{width:auto}
+.sp-thread .rv{grid-template-columns:110px 1fr 40px;font-size:13px}
+.sp-thread .handoff .tx{min-width:0}
+.sp-ask{padding:10px 16px 16px;border-top:1px solid var(--divider);background:var(--white)}
+.sp-ask .ask{box-shadow:none}
+.sp-res{padding:0 24px 140px;min-width:0}
+.rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 18px;margin-top:10px}
+.rgrid.five{grid-template-columns:repeat(5,minmax(0,1fr));gap:32px 16px}
+.rgrid.five .pcard h3{font-size:15px}
+.rgrid.five .pcard .btn{font-size:13px;padding:0 8px}
+.feat-card{grid-column:span 2;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;background:var(--bg-gray);border-radius:16px;padding:22px;align-items:center;transition:box-shadow .3s}
+.feat-card.flash,.pcard.flash{box-shadow:0 0 0 2px var(--blue)}
+.feat-card{align-self:start}
+.feat-card .im{background:var(--white);border-radius:var(--r-card);aspect-ratio:1;display:grid;place-items:center;max-width:100%;width:100%;max-height:300px;justify-self:center}
+.thread .turn:last-child{min-height:calc(100vh - var(--gnbh,82px) - 160px)}
+.ctitle>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctitle .tools{flex:none}
+.feat-card .im svg{width:72%;height:72%}
+.feat-card h3{font-family:var(--display);font-size:24px;line-height:1.15;margin:8px 0 4px;text-wrap:balance}
+.feat-card .sub{margin:0 0 6px;font-size:14px}
+.feat-card .rt{display:flex;gap:4px;align-items:center;font-size:13px;margin-bottom:10px}
+.feat-card .rt svg{width:13px;height:13px}
+.feat-card .price{font-size:22px}
+.feat-card .price em{display:block;font-style:normal;font-size:13px;color:var(--sale);font-weight:700}
+.fbtns{display:flex;gap:8px;margin:14px 0 10px;flex-wrap:wrap}
+.res-head{padding-block:28px 6px;font-size:15px}
+.rs{position:fixed;top:0;right:0;bottom:0;width:min(1040px,100%);background:var(--white);z-index:81;overflow:auto;padding:0 24px calc(40px + env(safe-area-inset-bottom,0px));animation:slide .25s ease-out}
+.rs-head{display:flex;justify-content:space-between;align-items:center;padding-top:20px;position:sticky;top:0;background:var(--white);z-index:2}
+.rs-head b{font-family:var(--display);font-size:24px;display:block}
+.rs-head span{color:var(--gray-text);font-size:13px}
+.rs .fbar{position:sticky;top:64px;background:var(--white);z-index:2}
+.rs .rgrid{padding-bottom:40px}
+.dock.right{justify-items:end}
+.dock.right>*{max-width:560px}
+.support-list{display:grid;gap:12px;margin-top:10px}
+@media (max-width:1200px){.rgrid.five{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1000px){
+  .mseg{display:flex;position:sticky;top:var(--gnbh,56px);z-index:20;background:var(--white);padding:10px 16px;gap:8px;border-bottom:1px solid var(--divider)}
+  .mseg button{flex:1;border:1px solid var(--divider);background:var(--white);border-radius:20px;height:38px;font-weight:700;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+  .mseg button svg{width:14px;height:14px}
+  .mseg button.on{background:var(--black);color:var(--white);border-color:var(--black)}
+  .split{grid-template-columns:minmax(0,1fr)}
+  .sp-chat{position:static;height:auto;border:0}
+  .sp-head{display:none}
+  .split.pane-chat .sp-res,.split.pane-res .sp-chat{display:none}
+  .sp-thread{padding:16px 16px 20px;overflow:visible}
+  .sp-ask{position:sticky;bottom:0;padding:10px 0 calc(12px + env(safe-area-inset-bottom,0px));border-top:0;background:linear-gradient(transparent,var(--white) 30%)}
+  .sp-ask .ask{box-shadow:0 8px 28px rgba(0,0,0,.12)}
+  .sp-res{padding:0 16px 140px}
+  .rgrid,.rgrid.five,.rs .rgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 12px}
+  .feat-card{grid-column:1/-1;grid-template-columns:minmax(0,1fr);padding:16px}
+  .feat-card .im{max-width:240px;justify-self:center;width:100%}
+  .rs{padding:0 16px 40px}
+  .dock.right{justify-items:center}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ==== v4: matched to live samsung.com measurements (captured Oct 2026, 1440 and 390 wide) ==== */
+:root{--display:"SamsungSharpSans","Outfit",arial,sans-serif;--body:"SamsungOne","Noto Sans",arial,sans-serif;--chip-line:#BBBBBB;--gray-text:#757575}
+body{margin:0;font-family:var(--body);font-size:16px;line-height:1.33}
+.wrap{padding-inline:24px}
+@media (max-width:760px){.wrap{padding-inline:24px}}
+
+/* GNB: 106px desktop, 64px mobile */
+.gnb{border-bottom:0}
+.gnb .wrap{position:relative}
+.util{position:absolute;right:24px;top:14px;padding:0;gap:22px;font-family:var(--display);font-size:14px;font-weight:700;line-height:20px}
+.util span{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.gnb-row{height:106px;padding-top:32px;gap:0}
+.logo{display:block;height:43px;padding:7px 0;margin-right:40px;flex:none}
+.logo{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:.115em;line-height:29px;color:#000}
+.nav{gap:0;font-family:var(--body);font-size:16px;font-weight:700;line-height:20px}
+.nav span{padding:12px 12px 16px;margin-top:4px}
+.nav span:hover{text-decoration:underline;text-underline-offset:6px}
+.icons{gap:4px}
+.ibtn{width:40px;height:40px;padding:8px}
+.ibtn svg{width:24px;height:24px}
+.ibtn:hover{background:none;opacity:.6}
+@media (max-width:1000px){
+  .gnb-row{height:64px;padding-top:0;gap:0}
+  .gnb .wrap{padding-inline:8px}
+  .logo{margin-right:auto;padding:7px 4px}
+  .logo{font-size:19px;line-height:29px}
+  .burger{order:5}
+}
+
+/* search popup: measured input 36px SamsungOne 700 (24px on phones), 14px 700 gray list titles */
+.pop{padding-block:32px 48px}
+.pop-head{gap:6px;padding-bottom:26px}
+.pop-head>svg{width:28px;height:28px}
+.pop-head input{font-family:var(--body);font-weight:700;font-size:36px;line-height:46px;height:46px;padding:0 2px;color:#000}
+.pop-head input::placeholder{color:#8f8f8f}
+.pop-head .clr-btn{font-family:var(--display);font-weight:700;font-size:14px;background:none;border:0;border-bottom:1px solid #000;padding:0 0 2px;margin-right:22px}
+.pop-body{grid-template-columns:340px 1fr;gap:48px;padding-top:30px}
+.eyebrow{font-family:var(--body);font-size:14px;font-weight:700;color:#757575;letter-spacing:0;margin:0 0 22px}
+.eyebrow.tc{text-transform:none}
+.recent{background:#F4F4F4;border-radius:20px;padding:8px 14px;font-size:14px;font-weight:700;margin-bottom:30px}
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.plist button{background:none;border:0;padding:0;font-size:14px;font-weight:700;text-align:left}
+.plist button:hover{text-decoration:underline}
+.recs{gap:12px}
+.rec .im{border-radius:8px;background:#F4F4F4}
+.rec .im img{width:100%;height:100%;object-fit:contain}
+.rec b{font-family:var(--body);font-weight:700;font-size:20px;line-height:29px;margin-top:20px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rec.one b{-webkit-line-clamp:1;display:block;white-space:nowrap;text-overflow:ellipsis}
+.rec span{display:block;font-size:16px;font-weight:700;margin-top:10px}
+.sugg{gap:10px}
+.sugg button{padding:0;font-size:14px;line-height:21px;border-radius:0;align-items:flex-start}
+.sugg button:hover,.sugg button.on{background:none;text-decoration:underline}
+.sugg .in{color:#757575}
+.sugg .ask{color:#000;font-weight:700;margin-bottom:6px}
+.sugg .ask svg{margin-top:2px;color:var(--blue-press)}
+@media (max-width:760px){
+  .pop{padding-block:16px 24px}
+  .pop-head input{font-size:24px;line-height:32px;height:32px}
+  .pop-body{grid-template-columns:1fr;gap:28px;padding-top:20px}
+  .rec b{font-size:16px;line-height:22px;margin-top:12px}
+  .rec span{font-size:14px}
+}
+
+/* search page header: "Results for" row 70px, 16px with bold keyword */
+.ctitle{min-height:70px;align-items:center;padding-top:0;font-size:16px}
+.ctitle b{font-weight:700}
+.ctitle .cnt{color:#000;font-size:16px}
+.ctitle .cnt b{font-weight:700}
+.ctop{border-bottom:1px solid #DDDDDD}
+.fbar{padding-block:0 18px;gap:8px}
+.fbtn{height:40px;border:1px solid var(--chip-line);border-radius:20px;padding:0 14px 0 16px;font-size:14px;font-weight:700;line-height:20px;color:#000}
+.fbtn.on{border-color:#000;background:#fff;color:#000}
+.fbtn.plain{border-color:transparent;padding-right:0;font-size:16px}
+.fbtn.plain .sv{color:#757575;font-weight:700}
+.fbtn svg{width:16px;height:16px}
+.fdiv{height:24px;background:#DDDDDD}
+.linkbtn{font-family:var(--display);font-size:14px;text-underline-offset:5px;text-decoration-thickness:1px}
+.fmenu button{font-size:16px}
+@media (max-width:760px){.ctitle{min-height:50px;font-size:17px}.fbar{padding-bottom:14px}}
+
+/* product card: image box #F7F7F7 r8, 216/314 image, 22px title, 32px swatches, 36px r4 chips, 40px r20 CTAs */
+.rgrid{gap:40px 36px;margin-top:4px}
+.pcard{gap:0}
+.pcard .im{background:#F7F7F7;border-radius:8px;aspect-ratio:314/312;margin-bottom:24px}
+.pcard .im img,.mcard .im img,.feat-card .im img,.pick .im img,.tray .th img{width:69%;height:69%;object-fit:contain}
+.im img,.cat img,.hero .art img{mix-blend-mode:multiply}
+.hero{background:#F4F4F4;color:#000;padding-block:56px}
+.hero h1{font-size:clamp(32px,4.4vw,56px)}
+.hero .btn.inv{background:#000;color:#fff;border-color:#000}
+.hero .btn.ghost-inv{color:#000;border-color:#000}
+.pcard .im .tag{left:12px;top:12px}
+.pcard h3{font-family:var(--body);font-size:22px;line-height:1.33;font-weight:700;margin:0}
+.pcard .sub{font-size:16px;line-height:1.33;margin-top:4px;color:#000}
+.pcard .rt,.feat-card .rt{display:flex;align-items:center;gap:7px;font-size:16px;font-weight:700;margin-top:16px;line-height:20px}
+.pcard .rt svg,.feat-card .rt svg{width:18px;height:18px}
+.pcard .clr,.feat-card .clr{font-size:12px;line-height:16px;color:#000;margin-top:24px}
+.sw{gap:4px;margin-top:8px;flex-wrap:wrap}
+.sw i{width:32px;height:32px;border:1px solid #DDDDDD;border-radius:50%;box-shadow:inset 0 0 0 3px #fff}
+.sw i.on{border:2px solid #000;box-shadow:inset 0 0 0 2px #fff}
+.opts{gap:8px;margin-top:16px}
+.opt{height:36px;display:inline-flex;align-items:center;border:1px solid var(--chip-line);border-radius:4px;padding:0 8px;font-size:14px;font-weight:700;color:#000}
+.opt.on{border-color:#000}
+.price{margin-top:20px;font-size:22px;line-height:1.33;font-weight:700;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.price s{font-size:14px;font-weight:400;color:#757575;margin:0}
+.sku{font-size:12px;font-weight:700;color:#757575;margin-top:14px;line-height:16px}
+.ctas{display:grid;gap:8px;margin-top:20px}
+.btn{height:40px;border-radius:20px;font-family:var(--display);font-size:14px;font-weight:700;padding:0 24px}
+.btn:hover{opacity:1;background:#000;color:#fff}
+.btn.fill:hover{background:#313131}
+.pcard .btn{margin:0;width:100%}
+.pcard .row{margin-top:0;padding-top:16px;font-size:14px}
+.pcard .row a{font-family:var(--display);font-weight:700;text-decoration:none;border-bottom:1px solid #000;padding-bottom:3px}
+.cmp{font-size:14px}
+.more{margin-top:48px}
+.more .btn{min-width:180px}
+@media (max-width:760px){
+  .rgrid,.rgrid.five,.rs .rgrid{gap:40px 8px}
+  .pcard .im{border-radius:4px;margin-bottom:24px;aspect-ratio:1}
+  .pcard .pc-tx{padding-inline:2px}
+  .pcard h3{font-size:19px;line-height:1.33}
+  .pcard .sub{font-size:12px}
+  .pcard .rt{font-size:16px}
+  .pcard .clr{font-size:12px}
+  .sw i{width:32px;height:32px}
+  .opt{font-size:14px;height:36px}
+  .price{font-size:18px;display:block}
+  .price s{display:block;font-size:14px}
+  .pcard .btn{height:34px;font-size:13px;padding:0 8px}
+}
+/* layout C keeps 5 across, so the card type steps down one size there */
+.rgrid.five{gap:40px 24px}
+.rgrid.five .pcard h3{font-size:18px}
+.rgrid.five .pcard .sub{font-size:14px}
+.rgrid.five .pcard .btn{font-size:14px;padding:0 8px}
+.rgrid.five .price{font-size:20px}
+
+/* compact cards inside answers */
+.mcard{border-radius:8px;padding:0 0 12px;border:0;gap:4px;background:none}
+.mcard:hover{border:0}
+.mcard .im{background:#F7F7F7;border-radius:8px;margin-bottom:12px}
+.mcard:hover .im{outline:1px solid #000}
+.mcard h4{font-family:var(--body);font-size:16px;line-height:1.33;font-weight:700}
+.mcard .sub{font-size:12px;color:#000}
+.mcard .rt{font-size:14px;font-weight:700;gap:5px}
+.mcard .rt svg{width:14px;height:14px}
+.mcard .price{font-size:18px;margin-top:auto;padding-top:8px}
+.mcard .price s{font-size:12px}
+.mcard .btn{height:36px;font-size:14px}
+.feat-card{background:#F7F7F7;border-radius:8px}
+.feat-card .im{background:#fff;border-radius:8px}
+.feat-card h3{font-family:var(--body);font-size:28px;line-height:1.25}
+.feat-card .sub{font-size:16px}
+.feat-card .price{font-size:24px;margin-top:16px}
+.feat-card .save{color:var(--sale);font-weight:700;font-size:14px;margin-top:2px}
+.pick .im{background:#F7F7F7}
+.tray .th span{background:#F7F7F7}
+.tray .th img{width:80%;height:80%}
+
+/* AI answer type on the site's scale */
+.q,.sheet-head b,.rs-head b,.ns h2,.hero h1{font-family:var(--display)}
+.lead{font-size:18px;line-height:1.5}
+.bul{font-size:16px;line-height:1.5}
+.who{font-size:16px}
+.chip{border-color:var(--chip-line);font-size:14px;font-weight:700}
+.chip:hover{border-color:#000}
+.ubub{font-size:16px}
+.prow-h b{font-size:16px}
+.prow-h span{font-size:14px;color:#757575}
+.picks-h{font-size:16px}
+.tag{font-family:var(--body);font-size:12px;font-weight:700;color:#fff;background:#000;border-radius:4px;padding:3px 6px}
+.pcard .im .tag,.mcard .im .tag{background:#000}
+
+/* footer */
+.site-foot{background:#F4F4F4;border-top:0;color:#000;font-size:14px;padding-block:48px 140px}
+.site-foot h6{font-family:var(--body);font-size:14px;font-weight:700;text-transform:none;margin:0 0 16px}
+.site-foot p{margin:0 0 12px;color:#313131}
+.site-foot .legal{border-top:1px solid #DDDDDD;padding-top:24px;font-size:12px;color:#555}
+
+/* home: real images */
+.hero .art img{width:100%;max-height:360px;object-fit:contain}
+.cat{background:#F4F4F4;border-radius:16px;font-family:var(--display);font-size:16px}
+.cat img{width:96px;height:96px;object-fit:contain;display:block;margin:0 auto 10px}
+
+.recs{align-items:start}
+.feat-card h3{font-size:24px}
+@media (max-width:760px){
+  .rgrid,.rgrid.five{margin-inline:-22px;gap:40px 4px}
+  .rgrid .pcard .pc-tx{padding-inline:24px}
+  .rgrid .pcard .im{border-radius:4px}
+  .feat-card{margin-inline:22px}
+}
+
+.logo img{display:block;height:19px;width:auto;margin-top:5px}
+@media (max-width:1000px){.logo img{height:15.5px;margin-top:6px}}
+.sparkm{width:16px;height:16px;flex:none}
+.im>.ph,.im>.rimg{grid-area:1/1}
+.im>.ph{display:grid;place-items:center;width:100%;height:100%}
+.rimg:not(.ok){opacity:0}
+.clarify{border:1px solid var(--divider);border-radius:16px;padding:16px 18px;margin-top:4px}
+.clarify b{display:block;font-size:16px;margin-bottom:12px}
+.copts{display:flex;flex-wrap:wrap;gap:8px}
+.copt{background:var(--white);border:1px solid #000;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;line-height:1.3}
+.copt:hover{background:#f4f4f4}
+.prow-h .pop{font-weight:400;color:#555;margin-left:8px}
+/* new search: empty start */
+.fresh{max-width:640px;margin:0 auto;padding:12vh 0 240px;text-align:center}
+.fresh .spark{width:32px;height:32px}
+.fresh h2{font-family:'SamsungSharpSans','Outfit',sans-serif;font-size:28px;margin:14px 0 8px}
+.fresh p{color:#555;margin:0 0 24px}
+.fresh .copts{justify-content:center}
+/* conversation map: a quiet tick per question; hover (or tap on phones) opens the list */
+.toc{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:15}
+.toc-ticks{display:flex;flex-direction:column;align-items:flex-end;padding:8px 0}
+.toc-t{display:flex;align-items:center;justify-content:flex-end;width:32px;height:14px;padding:0;border:0;background:none;cursor:pointer}
+.toc-t i{display:block;width:14px;height:2px;border-radius:2px;background:#C4C4C4;transition:width .2s,background .2s}
+.toc-t:hover i{background:#757575}
+.toc-t.on i{width:24px;height:3px;background:#000}
+.toc-panel{position:absolute;right:-6px;top:50%;width:320px;max-height:min(520px,70vh);overflow:auto;background:var(--white);border:1px solid var(--divider);border-radius:16px;box-shadow:0 10px 32px rgba(0,0,0,.12);padding:10px;opacity:0;pointer-events:none;transform:translate(10px,-50%);transition:opacity .18s,transform .18s}
+.toc:hover .toc-panel,.toc:focus-within .toc-panel,.toc.open .toc-panel{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
+.toc-h{display:flex;justify-content:space-between;align-items:baseline;padding:6px 8px 8px;font-size:13px;color:#555}
+.toc-h b{color:#000;font-size:14px}
+.toc-i{display:grid;grid-template-columns:24px minmax(0,1fr);gap:2px 10px;width:100%;padding:9px 8px;border:0;border-radius:10px;background:none;text-align:left;cursor:pointer}
+.toc-i:hover{background:#F4F4F4}
+.toc-i.on{background:#F4F4F4}
+.toc-n{grid-row:span 2;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1px solid #C4C4C4;font-size:12px;font-weight:700;color:#555}
+.toc-i.on .toc-n{background:#000;border-color:#000;color:#fff}
+.toc-q{font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.toc-k{font-size:12px;color:#757575}
+.toc-btn{display:none}
+@media (max-width:1000px){
+  .toc{top:calc(var(--gnbh,64px) + 128px);right:12px;transform:none}
+  .toc-ticks{display:none}
+  .toc-btn{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--divider);background:var(--white);box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:13px;font-weight:700}
+  .toc:hover .toc-panel{opacity:0;pointer-events:none}
+  .toc-panel{position:fixed;top:calc(var(--gnbh,64px) + 168px);right:12px;left:12px;width:auto;transform:translateY(-6px)}
+  .toc.open .toc-panel{opacity:1;pointer-events:auto;transform:none}
+}
+</style>
+
+<div class="proto" role="region" aria-label="Prototype controls">
+  <div class="wrap">
+    <b>Prototype</b>
+    <span>Try:</span>
+    <button data-run="home">Home + GNB search</button>
+    <button data-run="refrigerator">"refrigerator"</button>
+    <button data-run="best fridge for a family of 5 under $2,500">Family of 5 under $2,500</button>
+    <button data-run="galaxy s26 ultra">"galaxy s26 ultra"</button>
+    <button data-run="compare Z Fold 8, Z Fold 8 Ultra and S26 Ultra">Fold8 vs Fold8 Ultra vs S26 Ultra</button>
+    <button data-run="show me some phones with a great camera and long battery life for travel">Phones for travel</button>
+    <button data-run="tv">"tv"</button>
+    <button data-run="my galaxy buds won't connect">Buds won't connect</button>
+    <button data-run="can I use the S Pen on the Galaxy Z Fold8?">S Pen on Z Fold8? (from samsung.com)</button>
+    <button data-run="what is the difference between OLED and QLED?">OLED vs QLED (from samsung.com)</button>
+    <button class="notes" id="openNotes">Design notes</button>
+  </div>
+</div>
+
+<header class="gnb">
+  <div class="wrap">
+    <div class="util"><span>Find a Store</span><span>Support</span><span>For Business <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 9 9 3M4 3h5v5"/></svg></span></div>
+    <div class="gnb-row">
+      <button class="ibtn burger" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <button class="logo" id="logo" aria-label="Samsung home"><img src="img/samsung-logo.png" alt="Samsung"></button>
+      <nav class="nav"><span>Shop</span><span>Mobile</span><span>TV &amp; AV</span><span>Appliances</span><span>Computers &amp; Monitors</span><span>Wearables</span><span>Audio</span><span>Accessories</span></nav>
+      <div class="icons">
+        <button class="ibtn" id="openSearch" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button>
+        <button class="ibtn" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h2.5l2.2 11h10.6l2-8H6.6"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg></button>
+        <button class="ibtn" aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="sgB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3D86FF"/><stop offset="1" stop-color="#1F64E6"/></linearGradient><linearGradient id="sgT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E8CF4"/><stop offset="1" stop-color="#3FCFC0"/></linearGradient><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2E8CF4"/><stop offset="1" stop-color="#1F64E6"/></linearGradient></defs></svg>
+<main id="app"></main>
+<div id="dock" class="dock" hidden></div>
+<div id="layer"></div>
+
+<script>
+/* ------------------------------------------------------------------ icons */
+const I = {
+  spark:`<svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path fill="url(#sgB)" d="M15 3.0Q16.36 10.14 23.5 11.5Q16.36 12.86 15 20.0Q13.64 12.86 6.5 11.5Q13.64 10.14 15 3.0Z"/><path fill="url(#sgT)" d="M6 9.8Q6.83 14.17 11.2 15Q6.83 15.83 6 20.2Q5.17 15.83 0.7999999999999998 15Q5.17 14.17 6 9.8Z"/><path fill="#33B3A6" d="M6.8 1.6Q7.22 3.78 9.4 4.2Q7.22 4.62 6.8 6.800000000000001Q6.38 4.62 4.199999999999999 4.2Q6.38 3.78 6.8 1.6Z"/><path fill="#3D7BF2" d="M20.6 18.5Q20.97 20.43 22.900000000000002 20.8Q20.97 21.17 20.6 23.1Q20.23 21.17 18.3 20.8Q20.23 20.43 20.6 18.5Z"/></svg>`,
+  sparkLine:`<svg class="sparkm" viewBox="0 0 24 24" aria-hidden="true"><path fill="url(#sgB)" d="M15 3.0Q16.36 10.14 23.5 11.5Q16.36 12.86 15 20.0Q13.64 12.86 6.5 11.5Q13.64 10.14 15 3.0Z"/><path fill="url(#sgT)" d="M6 9.8Q6.83 14.17 11.2 15Q6.83 15.83 6 20.2Q5.17 15.83 0.7999999999999998 15Q5.17 14.17 6 9.8Z"/><path fill="#33B3A6" d="M6.8 1.6Q7.22 3.78 9.4 4.2Q7.22 4.62 6.8 6.800000000000001Q6.38 4.62 4.199999999999999 4.2Q6.38 3.78 6.8 1.6Z"/><path fill="#3D7BF2" d="M20.6 18.5Q20.97 20.43 22.900000000000002 20.8Q20.97 21.17 20.6 23.1Q20.23 21.17 18.3 20.8Q20.23 20.43 20.6 18.5Z"/></svg>`,
+  search:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>`,
+  close:`<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 5l14 14M19 5 5 19"/></svg>`,
+  up:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M6 11l6-6 6 6"/></svg>`,
+  mic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>`,
+  star:`<svg viewBox="0 0 24 24"><path fill="#000" d="m12 2.8 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`,
+  thumbUp:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 10v10H4V10h3Zm0 0 4-7c1.5 0 2.3 1 2 2.5L12.5 9H19c1.2 0 2 1 1.8 2.2l-1.3 7C19.3 19.3 18.5 20 17.5 20H7"/></svg>`,
+  thumbDn:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="transform:rotate(180deg)"><path d="M7 10v10H4V10h3Zm0 0 4-7c1.5 0 2.3 1 2 2.5L12.5 9H19c1.2 0 2 1 1.8 2.2l-1.3 7C19.3 19.3 18.5 20 17.5 20H7"/></svg>`,
+  info:`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>`,
+  filter:`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>`,
+};
+
+/* ------------------------------------------------------------------ product art (inline SVG, since live images can't load here) */
+const FIN = {
+  steel:['#e9ebed','#b3b8bd','#8d9399'], black:['#55585c','#2a2c2f','#151617'],
+  white:['#ffffff','#ecebe8','#cfcecb'], blue:['#dbe8ee','#b8cfd9','#94afbc'], navy:['#4a5466','#2b3240','#191e28'],
+  titan:['#d2cfc9','#9f9b94','#6d6a64'], silver:['#f2f3f5','#c9ccd1','#9a9fa6'], mint:['#e6f2ec','#bcd8ca','#8fb5a3']
+};
+function grad(id,f){const c=FIN[f]||FIN.steel;return `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${c[1]}"/><stop offset=".45" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[2]}"/></linearGradient>`}
+let gid=0;
+function art(p){
+  if(p.img) return `<img src="${p.img}" alt="${esc(p.name)}" loading="lazy" decoding="async">`;
+  if(p.remote) return `<span class="ph">${art({...p,remote:null})}</span><img class="rimg" src="${p.remote}?$400_400_PNG$" alt="${esc(p.name)}" loading="lazy" onload="this.previousElementSibling&&this.previousElementSibling.remove();this.classList.add('ok')" onerror="this.remove()">`;
+  const id='g'+(gid++); const f=p.fin||'steel'; const line=f==='black'||f==='navy'?'#0b0b0b':'#7d8288';
+  const H=(s)=>`<svg viewBox="0 0 120 120" aria-hidden="true"><defs>${grad(id,f)}${grad(id+'b','blue')}</defs>${s}</svg>`;
+  const handle=(x,y,h)=>`<rect x="${x}" y="${y}" width="1.6" height="${h}" rx=".8" fill="${line}" opacity=".8"/>`;
+  switch(p.art){
+    case 'fd3': return H(`<rect x="31" y="8" width="58" height="104" rx="2" fill="url(#${id})" stroke="${line}" stroke-width=".6"/><path d="M60 8v62M31 70h58" stroke="${line}" stroke-width=".7"/>${handle(56.5,30,30)}${handle(62,30,30)}<rect x="45" y="74" width="30" height="1.6" rx=".8" fill="${line}"/>${p.hub?'<rect x="66" y="22" width="16" height="22" rx="1" fill="#1b2230"/><rect x="67.5" y="23.5" width="13" height="19" fill="#3a5c86" opacity=".9"/>':''}${p.disp?`<rect x="36" y="26" width="13" height="20" rx="1.5" fill="${line}" opacity=".35"/>`:''}`);
+    case 'fd4': return H(`<rect x="31" y="8" width="58" height="104" rx="2" fill="url(#${id})" stroke="${line}" stroke-width=".6"/><path d="M60 8v56M31 64h58M31 88h58" stroke="${line}" stroke-width=".7"/>${handle(56.5,28,28)}${handle(62,28,28)}<rect x="47" y="68" width="26" height="1.6" fill="${line}"/><rect x="47" y="92" width="26" height="1.6" fill="${line}"/>`);
+    case 'flex': return H(`<rect x="31" y="8" width="58" height="104" rx="2" fill="url(#${id})" stroke="${line}" stroke-width=".6"/><path d="M60 8v104M31 64h58" stroke="${line}" stroke-width=".7"/>${handle(56.5,30,26)}${handle(62,30,26)}${handle(56.5,72,26)}${handle(62,72,26)}`);
+    case 'sbs': return H(`<rect x="31" y="8" width="58" height="104" rx="2" fill="url(#${id})" stroke="${line}" stroke-width=".6"/><path d="M58 8v104" stroke="${line}" stroke-width=".7"/>${handle(54.5,34,40)}${handle(61,34,40)}<rect x="38" y="30" width="12" height="18" rx="1.5" fill="${line}" opacity=".35"/>`);
+    case 'top': return H(`<rect x="36" y="8" width="48" height="104" rx="2" fill="url(#${id})" stroke="${line}" stroke-width=".6"/><path d="M36 40h48" stroke="${line}" stroke-width=".7"/>${handle(40,16,16)}${handle(40,48,30)}`);
+    case 'phone': return H(`<rect x="38" y="10" width="44" height="100" rx="7" fill="url(#${id})"/><rect x="40.5" y="12.5" width="39" height="95" rx="5" fill="#111"/><rect x="42" y="14" width="36" height="92" rx="4" fill="url(#${id}b)" opacity=".55"/><circle cx="60" cy="18" r="1.3" fill="#000"/>${p.pen?'<rect x="86" y="20" width="2.4" height="74" rx="1.2" fill="#555"/>':''}`);
+    case 'fold': return H(`<rect x="22" y="14" width="76" height="92" rx="6" fill="url(#${id})"/><rect x="24.5" y="16.5" width="71" height="87" rx="4" fill="#111"/><rect x="26" y="18" width="68" height="84" rx="3" fill="url(#${id}b)" opacity=".55"/><path d="M60 18v84" stroke="#000" stroke-opacity=".25" stroke-width=".6"/>`);
+    case 'flip': return H(`<rect x="40" y="8" width="40" height="104" rx="8" fill="url(#${id})"/><rect x="42.5" y="10.5" width="35" height="99" rx="6" fill="#111"/><rect x="44" y="12" width="32" height="96" rx="5" fill="url(#${id}b)" opacity=".55"/><path d="M42 60h36" stroke="#000" stroke-opacity=".35"/>`);
+    case 'buds': return H(`<g><ellipse cx="45" cy="56" rx="15" ry="13" fill="url(#${id})"/><rect x="41" y="60" width="8" height="34" rx="4" fill="url(#${id})"/><ellipse cx="75" cy="56" rx="15" ry="13" fill="url(#${id})"/><rect x="71" y="60" width="8" height="34" rx="4" fill="url(#${id})"/><circle cx="45" cy="54" r="4" fill="#fff" opacity=".6"/><circle cx="75" cy="54" r="4" fill="#fff" opacity=".6"/></g>`);
+    case 'watch': return H(`<rect x="48" y="6" width="24" height="28" rx="4" fill="#2b2c2e"/><rect x="48" y="86" width="24" height="28" rx="4" fill="#2b2c2e"/><rect x="32" y="30" width="56" height="60" rx="16" fill="url(#${id})"/><circle cx="60" cy="60" r="22" fill="#0e0e10"/><circle cx="60" cy="60" r="16" fill="none" stroke="#f26b2a" stroke-width="2" stroke-dasharray="40 100"/>`);
+    case 'tab': return H(`<rect x="14" y="26" width="92" height="66" rx="5" fill="url(#${id})"/><rect x="17" y="29" width="86" height="60" rx="3" fill="#111"/><rect x="19" y="31" width="82" height="56" rx="2" fill="#6fd0b7" opacity=".75"/>`);
+    case 'tv': return H(`<rect x="8" y="22" width="104" height="62" rx="2" fill="#111"/><rect x="10" y="24" width="100" height="58" fill="url(#${id}b)"/><path d="M10 82 60 40l50 42Z" fill="#000" opacity=".15"/><rect x="50" y="84" width="20" height="3" fill="#333"/><rect x="38" y="87" width="44" height="2" rx="1" fill="#333"/>`);
+    default: return H(`<rect x="30" y="30" width="60" height="60" rx="8" fill="url(#${id})"/>`);
+  }
+}
+
+/* ------------------------------------------------------------------ catalog (mocked from samsung.com, Oct 2026) */
+const P = [
+ {id:'f1',cat:'fridge',style:'Side-by-Side',art:'sbs',name:'27.4 cu. ft. Large Capacity Side-by-Side Refrigerator in Stainless Steel',sub:'',rating:4.4,reviews:1968,price:1399,was:1666,color:'Fingerprint Resistant Stainless Steel',fins:['black','steel'],fin:'steel',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RS27T5200SR/AA',cap:27.4,w:35.875,d:35.5,ice:'Ice maker in freezer',feats:['Water & ice dispenser']},
+ {id:'f2',cat:'fridge',style:'Top Freezer',art:'top',name:'15.6 cu. ft. Top Freezer Refrigerator with All-Around Cooling in Stainless Steel',sub:'',rating:4.1,reviews:258,price:749,was:849,color:'Stainless Steel',fins:['steel'],fin:'steel',depth:[],sku:'RT16A6195SR/AA',cap:15.6,w:28,d:30.25,ice:'Optional ice maker',feats:['All-Around Cooling']},
+ {id:'f3',cat:'fridge',style:'French Door',art:'fd3',disp:0,name:'Bespoke AI 3-Door French Door',sub:'Beverage Center™ | Dual Ice Maker | 24 cu.ft.',rating:4.4,reviews:1078,price:2099,was:3199,color:'Stainless Steel',fins:['steel'],fin:'steel',depth:['Counter Depth'],dsel:'Counter Depth',sku:'RF24BB6600QL/AA',cap:24,w:35.75,d:28.75,ice:'Dual Auto Ice Maker',feats:['Beverage Center','AI Energy Mode']},
+ {id:'f4',cat:'fridge',style:'French Door',art:'fd3',hub:1,name:'3-Door French Door',sub:'Family Hub™ & Mega Capacity | 4 Types of Ice | 30 cu.ft.',rating:4.2,reviews:547,price:2999,was:3499,color:'Stainless Steel',fins:['steel'],fin:'steel',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RF30CG5900SR/AA',cap:30,w:35.75,d:36,ice:'4 types of ice',feats:['Family Hub screen','Mega Capacity']},
+ {id:'f5',cat:'fridge',style:'French Door',art:'fd4',name:'Bespoke AI 4-Door French Door',sub:'Beverage Center™ | Dual Ice Maker & Flex Zone™ | 29 cu.ft.',rating:4.5,reviews:3289,price:2299,was:3399,color:'Stainless Steel',fins:['blue','steel','white'],fin:'steel',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RF29BB8600QL/AA',cap:29,w:35.75,d:34.5,ice:'Dual Auto Ice Maker',feats:['Beverage Center','FlexZone drawer']},
+ {id:'f6',cat:'fridge',style:'French Door',art:'fd3',name:'Bespoke AI 3-Door French Door',sub:'Zero Clearance Fit | Sphere Ice™ | 29 cu.ft.',rating:4.7,reviews:420,price:2299,was:2999,color:'Matte Black Steel',fins:['steel','black'],fin:'black',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RF29DB9900QD/AA',cap:29,w:35.75,d:34.25,zero:1,ice:'Sphere Ice + cubes',feats:['Zero Clearance Fit','AI Vision Inside']},
+ {id:'f7',cat:'fridge',style:'French Door',art:'fd3',name:'Bespoke AI 3-Door French Door',sub:'All-Around Cooling | Auto Ice Maker | 22 cu.ft.',rating:4.7,reviews:242,price:1499,was:1799,color:'Stainless Look',fins:['silver'],fin:'silver',depth:['Full Depth'],dsel:'Full Depth',sku:'RF22A4111SR/AA',cap:22,w:32.75,d:33.5,ice:'Auto Ice Maker',feats:['All-Around Cooling']},
+ {id:'f8',cat:'fridge',style:'Side-by-Side',art:'sbs',name:'Bespoke AI Side-by-Side',sub:'In-Door Ice Maker | All-Around Cooling | 28 cu.ft.',rating:4.5,reviews:988,price:1199,was:1499,color:'Fingerprint Resistant Stainless Steel',fins:['steel'],fin:'steel',depth:['Full Depth'],dsel:'Full Depth',sku:'RS28A500ASR/AA',cap:28,w:35.875,d:34.375,ice:'In-door ice maker',feats:['Water & ice dispenser']},
+ {id:'f9',cat:'fridge',style:'French Door',art:'fd3',disp:1,name:'3-Door French Door',sub:'Mega Capacity | External Water & Ice Dispenser | 26 cu.ft.',rating:4.4,reviews:141,price:2499,was:0,color:'Stainless Steel',fins:['steel'],fin:'steel',depth:['Counter Depth','Full Depth'],dsel:'Counter Depth',sku:'RF27T5501SR/AA',cap:26,w:35.75,d:29,ice:'External dispenser',feats:['Water & ice dispenser']},
+ {id:'f10',cat:'fridge',style:'French Door',art:'fd3',name:'3-Door French Door',sub:'Mega Capacity | Dual Auto Ice Maker | 32 cu.ft.',rating:4.2,reviews:426,price:2099,was:0,color:'Stainless Steel',fins:['steel'],fin:'steel',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RF32CG5100SR/AA',cap:32,w:35.875,d:36,ice:'Dual Auto Ice Maker',feats:['Mega Capacity']},
+ {id:'f11',cat:'fridge',style:'4-Door Flex',art:'flex',name:'Bespoke AI 4-Door Flex™',sub:'Beverage Center™ | Dual Ice Maker & Flex Zone™ | 29 cu.ft.',rating:4.0,reviews:440,price:2599,was:3599,color:'Stainless Steel',fins:['navy'],fin:'navy',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RF29BB8900QD/AA',cap:29,w:35.75,d:34.5,ice:'Dual Auto Ice Maker',feats:['Beverage Center','FlexZone']},
+ {id:'f12',cat:'fridge',style:'French Door',art:'fd4',name:'Bespoke AI 4-Door French Door',sub:'Inner Beverage Center™ | Single Ice Maker | 29 cu.ft.',rating:4.4,reviews:300,price:2199,was:2999,color:'Stainless Steel',fins:['black'],fin:'black',depth:['Counter Depth','Full Depth'],dsel:'Full Depth',sku:'RF29DB8600ED/AA',cap:29,w:35.75,d:34.5,ice:'Single ice maker',feats:['Inner Beverage Center']},
+ {id:'f13',cat:'fridge',style:'French Door',art:'fd3',name:'Bespoke AI 3-Door French Door',cap:24,w:35.75,d:29,zero:1,ice:'Dual Auto Ice Maker',feats:['Zero Clearance Fit','Dual Auto Ice Maker']},
+ {id:'f14',cat:'fridge',style:'French Door',art:'fd3',name:'Bespoke AI 3-Door French Door',cap:30,w:35.75,d:34.25,ice:'Dual Auto Ice Maker',feats:['Beverage Center','AI Energy Mode']},
+ {id:'f15',cat:'fridge',style:'French Door',art:'fd3',disp:1,name:'Bespoke AI 3-Door French Door',cap:31,w:35.875,d:35.75,ice:'External dispenser',feats:['Mega Capacity','Water & ice dispenser']},
+
+ {id:'p1',cat:'phone',art:'phone',pen:1,spec:{display:'6.9" QHD+ flat',camera:'200MP main, 5x & 3x tele',battery:'5,000 mAh',pen:'Built-in S Pen',weight:'214 g',open:'—'}},
+ {id:'p2',cat:'phone',art:'fold',spec:{display:'8.2" inner, 6.5" cover',camera:'200MP main, 3x tele',battery:'4,800 mAh',pen:'Not supported',weight:'219 g',open:'Opens to a tablet'}},
+ {id:'p3',cat:'phone',art:'fold'},
+ {id:'p4',cat:'phone',art:'phone'},
+
+ {id:'b1',cat:'audio',art:'buds'},{id:'b2',cat:'audio',art:'buds'},{id:'b3',cat:'audio',art:'buds'},
+ {id:'w1',cat:'watch',art:'watch'},{id:'w2',cat:'watch',art:'watch'},{id:'w3',cat:'watch',art:'watch'},{id:'w4',cat:'watch',art:'watch'},{id:'w5',cat:'watch',art:'watch'},{id:'w6',cat:'watch',art:'watch'},{id:'w7',cat:'watch',art:'watch'},
+ {id:'t1',cat:'tablet',art:'tab'},{id:'t2',cat:'tablet',art:'tab'},{id:'t3',cat:'tablet',art:'tab'},{id:'t4',cat:'tablet',art:'tab'},{id:'t5',cat:'tablet',art:'tab'},{id:'t6',cat:'tablet',art:'tab'},{id:'t7',cat:'tablet',art:'tab'},
+ {id:'v1',cat:'tv',art:'tv'},{id:'v2',cat:'tv',art:'tv'},{id:'v3',cat:'tv',art:'tv'},{id:'v4',cat:'tv',art:'tv'},{id:'v5',cat:'tv',art:'tv'},{id:'v6',cat:'tv',art:'tv'},{id:'v7',cat:'tv',art:'tv'},
+];
+const REAL = {"f1":{"sku":"RS27T5200SR/AA","img":"img/RS27T5200SR-AA.webp","name":"27.4 cu. ft. Large Capacity Side-by-Side Refrigerator in Stainless Steel","sub":"","price":1399.0,"was":1666.0,"rating":4.4,"reviews":1968,"cols":[["Fingerprint Resistant Black Stainless Steel","#010101"],["Fingerprint Resistant Stainless Steel","#c8c9cd"]],"color":"Fingerprint Resistant Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/side-by-side/rs5300t-large-capacity-27-4-cu-ft-silver-mirror-sku-rs27t5200sr-aa"},"f2":{"sku":"RT16A6195SR/AA","img":"img/RT16A6195SR-AA.webp","name":"15.6 cu. ft. Top Freezer Refrigerator with All-Around Cooling in Stainless Steel","sub":"","price":749.0,"was":849.0,"rating":4.1,"reviews":258,"cols":[["Stainless Steel","#c0c0c0"]],"color":"Stainless Steel","opts":["Counter Depth"],"osel":"Counter Depth","url":"https://www.samsung.com/us/refrigerators/top-freezer/15-6-cu-ft-top-freezer-refrigerator-with-all-around-cooling-in-stainless-steel-sku-rt16a6195sr-aa"},"f3":{"sku":"RF24BB6600QLAA","img":"img/RF24BB6600QLAA.webp","name":"Bespoke AI 3-Door French Door","sub":"Beverage Center™ | Dual Ice Maker | 24 cu.ft.","price":2099.0,"was":3199.0,"rating":4.4,"reviews":1078,"cols":[["Stainless Steel","#c0c0c0"]],"color":"Stainless Steel","opts":["Counter Depth"],"osel":"Counter Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-3-door-french-door-refrigerator-24-cu-ft-with-beverage-center-in-stainless-steel-sku-rf24bb6600qlaa"},"f4":{"sku":"RF32CG5900SRAA","img":"img/RF32CG5900SRAA.webp","name":"3-Door French Door","sub":"Family Hub™ & Mega Capacity | 4 Types of Ice | 30 cu.ft.","price":2999.0,"was":3499.0,"rating":4.2,"reviews":347,"cols":[["Stainless Steel","#c0c0c0"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/3-door-french-door-30-cu-ft-mega-capacity-3-door-french-door-refrigerator-with-family-hub-in-stainless-steel-sku-rf32cg5900sraa"},"f5":{"sku":"RF29BB8600QLAA","img":"img/RF29BB8600QLAA.webp","name":"Bespoke AI 4-Door French Door","sub":"Beverage Center™ | Dual Ice Maker & Flex Zone™ | 29 cu.ft.","price":2299.0,"was":3399.0,"rating":4.5,"reviews":3289,"cols":[["Morning Blue Glass and White Glass","#9fdad8"],["Stainless Steel","#c0c0c0"],["White Glass","#ffffff"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-4-door-french-door-refrigerator-29-cu-ft-with-beverage-center-in-stainless-steel-sku-rf29bb8600qlaa"},"f6":{"sku":"RF70H30GEEAA","img":"img/RF70H30GEEAA.webp","name":"Bespoke AI 3-Door French Door","sub":"Zero Clearance Fit | Sphere Ice™ | 29 cu. ft.","price":2299.0,"was":2999.0,"rating":4.7,"reviews":420,"cols":[["Stainless Steel","#c0c0c0"],["Matte Black Steel","#4a4a4d"]],"color":"Matte Black Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-ai-29-cu-ft-3-door-french-door-refrigerator-with-zero-clearance-fit-and-sphere-ice-in-matte-black-steel-sku-rf70h30geeaa"},"f7":{"sku":"RF22A4111SR/AA","img":"img/RF22A4111SR-AA.webp","name":"Bespoke AI 3-Door French Door","sub":"All-Around Cooling | Auto Ice Maker | 22 cu.ft.","price":1499.0,"was":1799.0,"rating":4.7,"reviews":242,"cols":[["Stainless Look","#c0c0c0"]],"color":"Stainless Look","opts":["Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-ai-22-cu-ft-3-door-french-door-refrigerator-with-auto-ice-maker-and-all-around-cooling-in-stainless-steel-sku-rf22a4111sr-aa"},"f8":{"sku":"RS28A500ASR/AA","img":"img/RS28A500ASR-AA.webp","name":"Bespoke AI Side-by-Side","sub":"In-Door Ice Maker | All-Around Cooling | 28 cu.ft.","price":1199.0,"was":1499.0,"rating":4.5,"reviews":988,"cols":[["Fingerprint Resistant Stainless Steel","#c0c0c0"]],"color":"Fingerprint Resistant Stainless Steel","opts":["Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/side-by-side/28-cu-ft-smart-side-by-side-refrigerator-in-stainless-steel-sku-rs28a500asr-aa"},"f9":{"sku":"RF27CG5B10SRAA","img":"img/RF27CG5B10SRAA.webp","name":"3-Door French Door","sub":"Mega Capacity | External Water & Ice Dispenser | 26 cu.ft.","price":2499.0,"was":0,"rating":4.4,"reviews":141,"cols":[["Stainless Steel","#c0c0c0"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Counter Depth","url":"https://www.samsung.com/us/refrigerators/french-door/26-cu-ft-mega-capacity-counter-depth-3-door-french-door-refrigerator-with-external-water-and-ice-dispenser-in-stainless-steel-sku-rf27cg5b10sraa"},"f10":{"sku":"RF32CG5100SRAA","img":"img/RF32CG5100SRAA.webp","name":"3-Door French Door","sub":"Mega Capacity | Dual Auto Ice Maker | 32 cu.ft.","price":2099.0,"was":0,"rating":4.2,"reviews":426,"cols":[["Stainless Steel","#b9bbbb"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/32-cu-ft-mega-capacity-3-door-french-door-refrigerator-with-dual-auto-ice-maker-in-stainless-steel-sku-rf32cg5100sraa"},"f11":{"sku":"RF29DB9600QLAA","img":"img/RF29DB9600QLAA.webp","name":"Bespoke AI 4-Door Flex™","sub":"Beverage Center™ | Dual Ice Maker & Flex Zone™ | 29 cu.ft.","price":2599.0,"was":3599.0,"rating":4.0,"reviews":440,"cols":[["Stainless Steel","#828284"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-4-door-flex-refrigerator-29-cu-ft-with-beverage-center-in-stainless-steel-sku-rf29db9600qlaa"},"f12":{"sku":"RF70F29DERAA","img":"img/RF70F29DERAA.webp","name":"Bespoke AI 4-Door French Door","sub":"Inner Beverage Center™ | Single Ice Maker | 29 cu.ft.","price":2199.0,"was":2999.0,"rating":4.4,"reviews":300,"cols":[["Stainless Steel","#828284"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-29-cu-ft-4-door-french-door-refrigerator-with-inner-beverage-center-flexzone-drawer-in-stainless-steel-sku-rf70f29deraa"},"f13":{"sku":"RF70H25HERAA","img":"img/RF70H25HERAA.webp","name":"Bespoke AI 3-Door French Door","sub":"Zero Clearance Fit | Dual Auto Ice Maker | 24 cu. ft.","price":2199.0,"was":2899.0,"rating":4.7,"reviews":292,"cols":[["Stainless Steel","#c0c0c0"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Counter Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-ai-24-cu-ft-counter-depth-3-door-french-door-refrigerator-with-zero-clearance-fit-and-dual-auto-ice-maker-in-stainless-steel-sku-rf70h25heraa"},"f14":{"sku":"RF30BB660012AA","img":"img/RF30BB660012AA.webp","name":"Bespoke AI 3-Door French Door","sub":"Beverage Center™ | Dual Ice Maker | 30 cu.ft.","price":1999.0,"was":3099.0,"rating":4.4,"reviews":1078,"cols":[["Stainless Steel","#c0c0c0"],["White Glass","#e3e3e3"]],"color":"White Glass","opts":["Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-3-door-french-door-refrigerator-30-cu-ft-with-beverage-center-in-white-glass-sku-rf30bb660012aa"},"f15":{"sku":"RF32CG5B30SRAA","img":"img/RF32CG5B30SRAA.webp","name":"Bespoke AI 3-Door French Door","sub":"Mega Capacity | External Water & Ice Dispenser | 31 cu.ft.","price":1799.0,"was":2399.0,"rating":4.7,"reviews":322,"cols":[["Stainless Steel","#c0c0c0"]],"color":"Stainless Steel","opts":["Counter Depth","Full Depth"],"osel":"Full Depth","url":"https://www.samsung.com/us/refrigerators/french-door/bespoke-ai-31-cu-ft-mega-capacity-3-door-french-door-refrigerator-with-external-water-and-ice-dispenser-in-stainless-steel-sku-rf32cg5b30sraa"},"p1":{"sku":"SM-S948UZVEXAA","img":"img/SM-S948UZVEXAA.webp","name":"Galaxy S26 Ultra","sub":"","price":1299.99,"was":1599.99,"rating":4.8,"reviews":9999,"cols":[["Black","#494d53"],["Pink Gold","#ead2c6"],["White","#f3f4f5"],["Sky Blue","#b3cbd9"],["Cobalt Violet","#686884"],["Silver Shadow","#c7c8ca"]],"color":"Cobalt Violet","opts":["256GB","512GB","1TB"],"osel":"512GB","url":"https://www.samsung.com/us/smartphones/galaxy-s26-ultra/buy/galaxy-s26-ultra-512gb-unlocked-sku-sm-s948uzvexaa"},"p2":{"sku":"SM-F976UDGAXAA","img":"img/SM-F976UDGAXAA.webp","name":"Galaxy Z Fold8 Ultra","sub":"","price":1849.99,"was":2099.99,"rating":4.9,"reviews":2519,"cols":[["Graphite","#5f6367"],["Cream","#f1f1ee"],["Violet Shadow","#4f4f5c"],["Green Shadow","#3b4e47"]],"color":"Green Shadow","opts":["256GB","512GB","1TB"],"osel":"256GB","url":"https://www.samsung.com/us/smartphones/galaxy-z-fold8-ultra/buy/galaxy-z-fold8-ultra-256gb-unlocked-sku-sm-f976udgaxaa"},"p3":{"sku":"SM-F971UZGAXAA","img":"img/SM-F971UZGAXAA.webp","name":"Galaxy Z Fold8","sub":"","price":1649.99,"was":1899.99,"rating":4.9,"reviews":2476,"cols":[["Graphite","#5f6367"],["Cream","#f1f1ee"],["Lavender","#bcb7ca"],["Pistachio","#abc4c0"]],"color":"Pistachio","opts":["256GB","512GB","1TB"],"osel":"256GB","url":"https://www.samsung.com/us/smartphones/galaxy-z-fold8/buy/galaxy-z-fold8-256gb-unlocked-sku-sm-f971uzgaxaa"},"p4":{"sku":"SM5S948UZDAXAA","img":"img/SM5S948UZDAXAA.webp","name":"Galaxy S26 Ultra Certified Re-Newed","sub":"","price":1099.0,"was":0,"rating":0.0,"reviews":0,"cols":[["Black","#494d53"],["Pinkgold","#ead2c6"],["White","#f3f4f5"],["Sky Blue","#b3cbd9"],["Cobalt Violet","#686884"],["Silver Shadow","#c7c8ca"]],"color":"Pinkgold","opts":["256GB","512GB","1TB"],"osel":"256GB","url":"https://www.samsung.com/us/smartphones/galaxy-s-series/certified-re-newed-store/buy/galaxy-s26-ultra-certified-re-newed-256gb-sku-sm5s948uzdaxaa"},"b1":{"sku":"SM-R640NZWAXAR","img":"img/SM-R640NZWAXAR.webp","name":"Galaxy Buds4 Pro","sub":"","price":249.99,"was":0,"rating":4.7,"reviews":2581,"cols":[["Black","#494d53"],["White","#f3f4f5"],["Pink Gold","#faebef"]],"color":"White","opts":[],"osel":"","url":"https://www.samsung.com/us/audio-sound/galaxy-buds4-pro/buy/galaxy-buds4-pro-white-sku-sm-r640nzwaxar"},"b2":{"sku":"SM-R540NZWAXAR","img":"img/SM-R540NZWAXAR.webp","name":"Galaxy Buds4","sub":"","price":179.99,"was":0,"rating":4.5,"reviews":380,"cols":[],"color":"","opts":[],"osel":"","url":"https://www.samsung.com/us/audio-sound/galaxy-buds4/buy/galaxy-buds4-white-sku-sm-r540nzwaxar"},"b3":{"sku":"SM-R420NZAAXAR","img":"img/SM-R420NZAAXAR.webp","name":"Galaxy Buds3 FE","sub":"","price":149.99,"was":0,"rating":4.6,"reviews":393,"cols":[["Black","#4c525c"],["Gray","#c8ccca"]],"color":"Gray","opts":[],"osel":"","url":"https://www.samsung.com/us/mobile-audio/galaxy-buds3-fe/buy/galaxy-buds3-fe-gray-sku-sm-r420nzaaxar"},"w1":{"sku":"SM-L715UZSAXAA","img":"img/SM-L715UZSAXAA.webp","name":"Galaxy Watch Ultra2 (LTE, 47 mm)","sub":"","price":699.99,"was":0,"rating":4.9,"reviews":2299,"cols":[["Titanium Gray","#404347"],["Titanium Silver","#6d6e72"]],"color":"Titanium Silver","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch-ultra2/buy/galaxy-watch-ultra2-47mm-titanium-silver-lte-sku-sm-l715uzsaxaa"},"w2":{"sku":"SM-L355UZKAXAA","img":"img/SM-L355UZKAXAA.webp","name":"Galaxy Watch9 (LTE, 44 mm)","sub":"","price":459.99,"was":0,"rating":4.7,"reviews":1146,"cols":[["Graphite","#404347"],["Silver","#9c9f9c"]],"color":"Graphite","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch9/buy/galaxy-watch9-44mm-graphite-lte-sku-sm-l355uzkaxaa"},"w3":{"sku":"SM-L345UZEAXAA","img":"img/SM-L345UZEAXAA.webp","name":"Galaxy Watch9 (LTE, 40 mm)","sub":"","price":429.99,"was":0,"rating":4.7,"reviews":1146,"cols":[["Graphite","#404347"],["Cream","#dad6cb"]],"color":"Cream","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch9/buy/galaxy-watch9-40mm-cream-lte-sku-sm-l345uzeaxaa"},"w4":{"sku":"SM-L350NZKAXAA","img":"img/SM-L350NZKAXAA.webp","name":"Galaxy Watch9 (Bluetooth, 44 mm)","sub":"","price":409.99,"was":0,"rating":4.7,"reviews":1146,"cols":[["Graphite","#404347"],["Silver","#9c9f9c"]],"color":"Graphite","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch9/buy/galaxy-watch9-44mm-graphite-bluetooth-sku-sm-l350nzkaxaa"},"w5":{"sku":"SM-L340NZEAXAA","img":"img/SM-L340NZEAXAA.webp","name":"Galaxy Watch9 (Bluetooth, 40 mm)","sub":"","price":379.99,"was":0,"rating":4.7,"reviews":1146,"cols":[["Graphite","#404347"],["Cream","#dad6cb"]],"color":"Cream","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch9/buy/galaxy-watch9-40mm-cream-bluetooth-sku-sm-l340nzeaxaa"},"w6":{"sku":"SM-L310NZGAXAA","img":"img/SM-L310NZGAXAA.webp","name":"Galaxy Watch7 (Bluetooth, 44mm)","sub":"","price":279.99,"was":0,"rating":4.5,"reviews":4913,"cols":[["Silver","#c0c0c0"],["Green","#749d8c"]],"color":"Green","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch7/buy/galaxy-watch7-44mm-green-wifi-bluetooth-sku-sm-l310nzgaxaa"},"w7":{"sku":"SM-L300NZEAXAA","img":"img/SM-L300NZEAXAA.webp","name":"Galaxy Watch7","sub":"","price":249.99,"was":0,"rating":4.5,"reviews":4913,"cols":[["Cream","#f0eae0"],["Green","#749d8c"]],"color":"Cream","opts":[],"osel":"","url":"https://www.samsung.com/us/watches/galaxy-watch7/buy/galaxy-watch7-40mm-cream-wifi-bluetooth-sku-sm-l300nzeaxaa"},"t1":{"sku":"SM-X230NZAIXAR","img":"img/SM-X230NZAIXAR.webp","name":"Galaxy Tab A11+ (11\")","sub":"","price":299.99,"was":0,"rating":4.8,"reviews":512,"cols":[["Silver","#c7c8ca"],["Gray","#75787b"]],"color":"Gray","opts":["128 GB","256 GB"],"osel":"128 GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-a11-plus/buy/galaxy-tab-a11-plus-128gb-gray-wi-fi-sku-sm-x230nzaixar"},"t2":{"sku":"SM-X940NZAAXAR","img":"img/SM-X940NZAAXAR.webp","name":"Galaxy Tab S12 Ultra (14.6\")","sub":"","price":1399.99,"was":0,"rating":5.0,"reviews":2,"cols":[["Gray","#808080"],["Silver","#c0c0c0"]],"color":"Gray","opts":["256 GB","512 GB","1 TB"],"osel":"256 GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-s12/buy/galaxy-tab-s12-ultra-256gb-gray-wi-fi-sku-sm-x940nzaaxar"},"t3":{"sku":"SM-X848UZAAATT","img":"img/SM-X848UZAAATT.webp","name":"Galaxy Tab S12+ 5G (12.6\")","sub":"","price":1349.99,"was":0,"rating":0.0,"reviews":0,"cols":[["Gray","#808080"]],"color":"Gray","opts":["256 GB"],"osel":"256 GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-s12/buy/galaxy-tab-s12-plus-5g-256gb-gray-wi-fi-sku-sm-x848uzaaatt"},"t4":{"sku":"SM-X840NZAAXAR","img":"img/SM-X840NZAAXAR.webp","name":"Galaxy Tab S12+ (12.6\")","sub":"","price":1199.99,"was":0,"rating":0.0,"reviews":0,"cols":[["Gray","#808080"],["Silver","#c0c0c0"]],"color":"Gray","opts":["256 GB","512 GB"],"osel":"256 GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-s12/buy/galaxy-tab-s12-plus-256gb-gray-wi-fi-sku-sm-x840nzaaxar"},"t5":{"sku":"SM-X820NZAEXAR","img":"img/SM-X820NZAEXAR.webp","name":"Galaxy Tab S10+ (12.4\")","sub":"","price":1299.99,"was":0,"rating":4.8,"reviews":900,"cols":[["Platinum Silver","#d0d1cf"],["Moonstone Gray","#606e81"]],"color":"Moonstone Gray","opts":["256GB","512GB"],"osel":"512GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-s10/buy/galaxy-tab-s10-plus-512gb-moonstone-gray-wi-fi-sku-sm-x820nzaexar"},"t6":{"sku":"SM-X238UZAAATT","img":"img/SM-X238UZAAATT.webp","name":"Galaxy Tab A11+ 5G (11\")","sub":"","price":329.99,"was":0,"rating":4.8,"reviews":512,"cols":[["Gray","#75787b"]],"color":"Gray","opts":["128 GB"],"osel":"128 GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-a11-plus/buy/galaxy-tab-a11-plus-5g-128gb-gray-sku-sm-x238uzaaatt"},"t7":{"sku":"SM-X930NZSEXAR","img":"img/SM-X930NZSEXAR.webp","name":"Galaxy Tab S11 Ultra (14.6\")","sub":"","price":1499.99,"was":0,"rating":4.7,"reviews":496,"cols":[["Silver","#c7c8ca"],["Gray","#75787b"]],"color":"Silver","opts":["256 GB","512 GB","1 TB"],"osel":"512 GB","url":"https://www.samsung.com/us/tablets/galaxy-tab-s11/buy/galaxy-tab-s11-ultra-512gb-silver-wi-fi-sku-sm-x930nzsexar"},"v1":{"sku":"QN77S95HAFXZA","img":"img/QN77S95HAFXZA.webp","name":"77 Inch Class OLED S95H","sub":"4K | Samsung Vision AI Smart TV | (2026)","price":3699.99,"was":4499.99,"rating":4.8,"reviews":188,"cols":[],"color":"","opts":["55\"","65\"","77\"","83\""],"osel":"77\"","url":"https://www.samsung.com/us/tvs/oled-tv/77-inch-oled-4k-tv-s95h-sku-qn77s95hafxza"},"v2":{"sku":"QN77S90HAEXZA","img":"img/QN77S90HAEXZA.webp","name":"77 Inch Class OLED S90H","sub":"4K | Samsung Vision AI Smart TV | (2026)","price":2299.99,"was":3699.99,"rating":4.7,"reviews":207,"cols":[],"color":"","opts":["42\"","48\"","55\"","65\"","77\"","83\""],"osel":"77\"","url":"https://www.samsung.com/us/tvs/oled-tv/77-inch-oled-4k-tv-s90h-sku-qn77s90haexza"},"v3":{"sku":"QN77S85HAEXZA","img":"img/QN77S85HAEXZA.webp","name":"77 Inch Class OLED S85H","sub":"4K | Samsung Vision AI Smart TV | (2026)","price":1999.99,"was":2799.99,"rating":4.8,"reviews":63,"cols":[],"color":"","opts":["48\"","55\"","65\"","77\"","83\""],"osel":"77\"","url":"https://www.samsung.com/us/tvs/oled-tv/77-inch-oled-4k-tv-s85h-sku-qn77s85haexza"},"v4":{"sku":"QN55S84FAFXZA","img":"img/QN55S84FAFXZA.webp","name":"55 Inch Class OLED S84F 4K Samsung Vision AI Smart TV (2025)","sub":"","price":799.99,"was":999.99,"rating":4.6,"reviews":44,"cols":[],"color":"","opts":["55\""],"osel":"55\"","url":"https://www.samsung.com/us/tvs/oled-tv/55-class-oled-tv-s84f-sku-qn55s84fafxza"},"v5":{"sku":"QN83S85FAEXZA","img":"img/QN83S85FAEXZA.webp","name":"83 Inch Class OLED S85F","sub":"4K | Samsung Vision AI Smart TV | (2025)","price":4499.99,"was":0,"rating":4.7,"reviews":394,"cols":[],"color":"","opts":["55\"","65\"","77\"","83\""],"osel":"83\"","url":"https://www.samsung.com/us/tvs/oled-tv/83-class-oled-tvs85f-sku-qn83s85faexza"},"v6":{"sku":"QN55S90FAFXZA","img":"img/QN55S90FAFXZA.webp","name":"55 Inch Class OLED S90F","sub":"4K | Samsung Vision AI Smart TV | (2025)","price":1199.99,"was":1799.99,"rating":4.6,"reviews":1390,"cols":[],"color":"","opts":["42\"","48\"","55\"","65\"","77\"","83\""],"osel":"55\"","url":"https://www.samsung.com/us/tvs/oled-tv/55-class-oled-tvs90f-sku-qn55s90fafxza"},"v7":{"sku":"QN77S84FAEXZA","img":"img/QN77S84FAEXZA.webp","name":"77 Inch Class OLED S84F","sub":"4K Samsung Vision AI Smart TV (2025)","price":1299.99,"was":1599.99,"rating":4.7,"reviews":394,"cols":[],"color":"","opts":["77\""],"osel":"77\"","url":"https://www.samsung.com/us/tvs/oled-tv/77-inch-class-oled-tvs-s84f-sku-qn77s84faexza"}};
+/* real product data captured from samsung.com search results (Oct 2026): names, prices, ratings, colors, options and images */
+P.forEach(p=>{const r=REAL[p.id]; if(!r) return; Object.assign(p,r); if(p.cat==='fridge'){p.depth=r.opts; p.dsel=r.osel}});
+const byId = Object.fromEntries(P.map(p=>[p.id,p]));
+
+/* ------------------------------------------------------------------ samsung.com knowledge base
+   Crawled from samsung.com (Oct 2026) into data/kb.json: product pages, FAQs and support articles.
+   Search ranks products and passages with BM25; answers quote the passages and link the page they came from. */
+const KB={ready:false,products:[],faqs:[],chunks:[]};
+const STOP=new Set('a an the and or of to for in on with my me is are do does did how what can could i you your it its this that be from at by as about which will would should there their they we our get has have if not no'.split(' '));
+const stem=w=>w.length>4?w.replace(/(ing|ers|er|ies|es|s)$/,''):w;
+const toks=s=>((s||'').toLowerCase().match(/[a-z0-9]+(?:\.[0-9]+)?/g)||[]).filter(w=>w.length>1&&!STOP.has(w)).map(stem);
+function buildIdx(docs,textFn){
+  const df=new Map(),tf=[];let tot=0;
+  docs.forEach(d=>{const ws=toks(textFn(d));tot+=ws.length;const m=new Map();ws.forEach(w=>m.set(w,(m.get(w)||0)+1));tf.push([m,ws.length]);m.forEach((_,w)=>df.set(w,(df.get(w)||0)+1))});
+  return {N:docs.length,df,tf,avg:tot/Math.max(1,docs.length)};
+}
+function bm25(idx,q,k){
+  const qs=[...new Set(toks(q))].filter(w=>idx.df.has(w)); if(!qs.length) return [];
+  const idf=Object.fromEntries(qs.map(w=>[w,Math.log(1+(idx.N-idx.df.get(w)+.5)/(idx.df.get(w)+.5))]));
+  const out=[];
+  idx.tf.forEach(([m,len],i)=>{let s=0,hit=0;for(const w of qs){const f=m.get(w);if(!f)continue;hit++;s+=idf[w]*f*2.2/(f+1.2*(.25+.75*len/idx.avg))}if(s>0)out.push([s*(hit/qs.length),i])});
+  return out.sort((a,b)=>b[0]-a[0]).slice(0,k||8);
+}
+const HEX=n=>{n=(n||'').toLowerCase();return /black|charcoal|graphite|jet|onyx/.test(n)?'#2d2e30':/navy|blueblack|blue shadow/.test(n)?'#3a4458':/icy|sky|blue/.test(n)?'#b8cde0':/mint|green|olive/.test(n)?'#c6e3d3':/coral|red/.test(n)?'#f0b2a5':/pink|peach|rose/.test(n)?'#ecd2c8':/violet|lavender|purple/.test(n)?'#b9b1d8':/gold|yellow|cream|beige/.test(n)?'#ebe0c8':/white/.test(n)?'#f4f4f2':'#c8c9cd'};
+const FR_STYLE={'3-door French door':'French Door','4-door French door':'French Door','side-by-side':'Side-by-Side','4-door Flex':'4-Door Flex','top freezer':'Top Freezer','convertible upright':'Upright'};
+function frFields(p,fr){
+  if(!fr) return;
+  if(FR_STYLE[fr.style]) p.style=FR_STYLE[fr.style];
+  if(fr.capacity_cu_ft) p.cap=fr.capacity_cu_ft;
+  if(fr.width_in) p.w=fr.width_in;
+  if(fr.depth_in) p.d=fr.depth_in;
+  if(fr.height_in) p.h=fr.height_in;
+  if(fr.ice_type) p.ice=fr.ice_type.replace(/^\w/,c=>c.toUpperCase());
+  p.real=true;
+}
+function loadKB(d){
+  KB.products=d.products; KB.faqs=d.faqs; KB.chunks=d.chunks; KB.at=d.v;
+  const bySku=new Map(P.map(p=>[p.sku,p]));
+  const groups=new Map();
+  for(const k of d.products){const g=k.cat+'|'+k.fam; if(!groups.has(g)) groups.set(g,[]); groups.get(g).push(k)}
+  let n=0;
+  for(const [,g] of groups){
+    const known=g.map(k=>bySku.get(k.sku)).find(Boolean);
+    if(known){ // a product captured from the search page: keep its photo and options, add the crawled facts
+      const k=g.find(x=>x.sku===known.sku)||g[0];
+      Object.assign(known,{url:k.url,keys:k.keys,feats:(k.keys.length?k.keys:known.feats)||[],desc:k.desc,aspects:k.aspects,rec:k.rec,kb:k});
+      if(known.cat==='fridge') frFields(known,k.fr);
+      continue;
+    }
+    const k=[...g].sort((a,b)=>(b.reviews-a.reviews)||(b.price-a.price))[0];
+    if(!k.price||!k.cat) continue;
+    const p={id:'k'+(n++),cat:k.cat,art:k.cat==='fridge'?'fd3':k.cat==='tv'?'tv':'phone',name:k.name,sub:k.sub||k.keys.slice(0,3).join(' | '),
+      rating:k.rating,reviews:k.reviews,price:k.price,was:k.was,sku:k.sku,remote:k.img,url:k.url,keys:k.keys,feats:k.keys.length?k.keys:k.feats.map(f=>f.split('.')[0]),desc:k.desc,aspects:k.aspects,rec:k.rec,kb:k,
+      cols:k.colors.map(c=>[c,HEX(c)]),color:k.attrs.Color||k.colors[0]||'',opts:k.opts,osel:k.attrs.Size||k.attrs.Storage||k.opts[0]};
+    if(k.cat==='fridge'){
+      p.style='French Door'; p.cap=0; p.w=36; p.d=34; p.ice='Ice maker'; frFields(p,k.fr);
+      p.depth=k.fr?.counter_depth?['Counter Depth']:['Full Depth']; p.dsel=p.depth[0]; p.opts=p.depth; p.osel=p.dsel;
+      p.zero=/zero clearance/i.test(k.name+k.sub)?1:0; p.fin=/black/i.test(p.color)?'black':'steel';
+      if(!p.cap) continue;
+    }
+    P.push(p); byId[p.id]=p;
+  }
+  KB.fi=buildIdx(KB.faqs,f=>f.q+' '+f.q+' '+f.a);
+  KB.ci=buildIdx(KB.chunks,c=>c.t+' '+c.t+' '+c.h+' '+c.h+' '+c.x);
+  KB.pi=buildIdx(P,p=>[p.name,p.name,p.sub,(p.keys||[]).join(' '),p.desc||'',CAT_LABEL[p.cat]||''].join(' '));
+  const fams=[...new Set(P.filter(p=>p.cat==='phone').map(p=>p.name.replace(/ (\d+GB|\d+TB|Certified Re-Newed).*$/,'')))].slice(0,30);
+  fams.forEach(f=>{if(!SUGG.some(s=>s.toLowerCase()===f.toLowerCase())) SUGG.push(f)});
+}
+function loadAcc(d){ // official cases, screen protectors and S Pens with the phones they fit (samsung.com, Oct 2026)
+  (d.items||[]).forEach((x,i)=>{const p={id:'a'+i,cat:'acc',atype:x.t,name:x.n,sub:x.col,price:x.p,was:x.w,rating:x.r,reviews:x.rc,remote:x.img,url:x.u,fits:x.m,sku:x.sku}; P.push(p); byId[p.id]=p});
+}
+KB.wait=Promise.all([fetch('data/kb.json').then(r=>{if(!r.ok) throw new Error(r.status);return r.json()}),fetch('data/accessories.json').then(r=>r.ok?r.json():{items:[]}).catch(()=>({items:[]}))]).then(([d,a])=>{loadKB(d);loadAcc(a)}).catch(e=>{KB.error=String(e);console.warn('Knowledge base not loaded',e)}).finally(()=>{KB.ready=true});
+
+const fridgeAll=()=>P.filter(p=>p.cat==='fridge'&&p.price);
+function cleanPassage(x){return x.replace(/^.{0,160}? \| (?=[A-Z])/,'').replace(/^[^|]{0,120}\| /,'')}
+function segs(text){
+  return cleanPassage(text).replace(/([a-z0-9)][.!?,])([A-Z])/g,'$1 $2').replace(/…$/,'.').split(/(?<=[.!?])\s+(?=[A-Z0-9"•])/)
+    .map(s=>s.trim().replace(/^(Note|Important|Tip)\s+(?=[A-Z])/,'')).filter(s=>s.length>20&&s.length<420&&!/Go to |cookie|javascript|click here|Recommended Articles|Was this (content|information) helpful|^\d+\.?$/i.test(s));
+}
+const isQ=s=>/\?$/.test(s);
+const okSent=s=>!isQ(s)&&/^[A-Z0-9"•]/.test(s)&&s.length>35;
+function sentScore(s,qs){const ws=new Set(toks(s));let v=0;for(const w of qs) if(ws.has(w)) v+=Math.log(1+KB.ci.N/((KB.ci.df.get(w)||0)+1));return v}
+/* best answer window in a passage: a matching question is answered by the sentences after it */
+function bestWindow(text,q,n){
+  const qs=[...new Set(toks(q))], ss=segs(text);
+  let best=null;
+  ss.forEach((s,i)=>{
+    const sc=sentScore(s,qs)*(isQ(s)?1.2:1)-i*0.02;
+    let out;
+    if(isQ(s)){out=[];for(let j=i+1;j<ss.length&&out.length<n;j++){if(isQ(ss[j]))break;if(okSent(ss[j]))out.push(ss[j])}}
+    else if(okSent(s)) out=[s,...ss.slice(i+1,i+n).filter(okSent)].slice(0,n);
+    if(out?.length&&(!best||sc>best.sc)) best={sc,text:out.join(' '),probe:s+' '+out.join(' ')};
+  });
+  return best;
+}
+function bestSentences(text,q,n){return bestWindow(text,q,n)?.text||''}
+const QUESTION=/^(how|what|why|when|where|who|does|do|can|is|are|will|should i|which (setting|app|cable|charger))\b|\?$/;
+function looksLikeQuestion(q){return QUESTION.test(q.trim())&&!/\b(best|recommend|under \$?\d|vs\.?|versus|compare|deal|sale|cheap|family of|fit|for (a|my) (room|kitchen|family))\b/.test(q)}
+function kbAnswer(raw,cat,mode){
+  if(!KB.fi) return null;
+  const ql=raw.toLowerCase().trim(), qs=[...new Set(toks(raw))];
+  const sup=mode==='support'||/reset|fix|troubleshoot|connect|pair|no sound|no picture|error|not working|won.?t|doesn.?t|isn.?t|leak|noise|not cooling/.test(ql);
+  const docs=[];
+  bm25(KB.fi,raw,6).filter(([,i])=>!sup||/\/support\//.test(KB.faqs[i].u)).slice(0,3).forEach(([s,i])=>{const x=KB.faqs[i];docs.push({s:s*1.15,text:x.a,isFaq:1,src:{t:x.q,u:x.u}})});
+  bm25(KB.ci,raw,60).filter(([,i])=>!sup||KB.chunks[i].p==='s').slice(0,8).forEach(([s,i])=>{const x=KB.chunks[i];docs.push({s,text:x.x,src:{t:x.t+(x.h?' · '+x.h:''),u:x.u}})});
+  if(!docs.length) return null;
+  const top=Math.max(...docs.map(d=>d.s)); if(top<3) return null;
+  const key=qs.filter(w=>!/^(samsung|galaxy)$/.test(w));
+  const idfK=w=>Math.log(1+KB.ci.N/((KB.ci.df.get(w)||0)+1)), keyW=key.reduce((s,w)=>s+idfK(w),0);
+  docs.forEach(d=>{d.win=bestWindow(d.isFaq?d.src.t+' '+d.text:d.text,raw,2); if(!d.win){d.cov=0;return}
+    const ws=new Set(toks(d.win.probe+' '+(d.isFaq?d.src.t:'')));d.cov=keyW?key.filter(w=>ws.has(w)).reduce((s,w)=>s+idfK(w),0)/keyW:0});
+  const top2=Math.max(...docs.map(d=>d.s)); docs.forEach(d=>d.rank=d.cov+0.5*d.s/top2); docs.sort((a,b)=>b.rank-a.rank);
+  if(!docs[0].win||docs[0].cov<.7){ // nothing on samsung.com answers this directly: say so and show the closest pages
+    const near=[];for(const d of [...docs].sort((a,b)=>b.s-a.s)){if(!near.some(s=>s.u===d.src.u))near.push(d.src);if(near.length>=3)break}
+    return {kind:'answer',cat:cat||S.cat,kb:true,think:['Searching samsung.com product, FAQ and support pages'],
+      lead:`I couldn't find a samsung.com page that answers **"${esc(raw)}"** directly, so I won't guess. These pages are the closest match, or a specialist can help.`,
+      bullets:[],sources:near,picks:[],chips:['Talk to a specialist']};
+  }
+  const lead0=docs[0].win.text;
+  const sources=[docs[0].src], bullets=[];
+  for(const d of docs.slice(1)){ if(!d.win||d.cov<.7||sources.some(s=>s.u===d.src.u)) continue; const b=d.win.text.split(/(?<=[.!?])\s/)[0]; if(lead0.slice(0,50)===b.slice(0,50)||bullets.some(x=>x.slice(0,50)===esc(b).slice(0,50))) continue; bullets.push(esc(b)); sources.push(d.src); if(bullets.length>=2) break }
+  // cards only when the question is about specific products; general how-to and knowledge answers stay text-only
+  const named=findModels(raw).map(m=>m.p);
+  const related=named.length?named:[];
+  const showPicks=related.length&&!sup&&!/^(my)\b/.test(ql);
+  return {kind:'answer',cat:cat||related[0]?.cat||S.cat,kb:true,think:[sup?'Searching Samsung support articles':'Searching samsung.com product and FAQ pages',`Reading the ${sources.length} best matching pages`],
+    lead:esc(lead0),bullets,sources,
+    picks:showPicks?related.slice(0,3).map(p=>p.id):[],
+    tags:Object.fromEntries(related.slice(0,3).map(p=>[p.id,'Mentioned'])),
+    chips:sup?['Still not working','Check my warranty','Talk to a specialist']:['Show me related products','Talk to a specialist']};
+}
+const srcCache=new Map();
+function srcLink(s){
+  if(typeof s==='object') return s;
+  if(srcCache.has(s)) return srcCache.get(s);
+  let u='https://www.samsung.com/us/';
+  if(KB.ci){const r=bm25(KB.ci,s,1)[0]; if(r) u=KB.chunks[r[1]].u}
+  const o={t:s,u}; if(KB.ci) srcCache.set(s,o); return o;
+}
+
+const fmt = n => '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => '$'+Math.round(n).toLocaleString('en-US');
+const inch = v => { const w=Math.floor(v), f=v-w; const map={0:'',0.125:' 1/8',0.25:' 1/4',0.375:' 3/8',0.5:' 1/2',0.625:' 5/8',0.75:' 3/4',0.875:' 7/8'}; return w+(map[Math.round(f*8)/8]??'')+'"' };
+const CAT_LABEL = {acc:'accessories',fridge:'refrigerators',phone:'phones',audio:'earbuds',watch:'watches',tablet:'tablets',tv:'TVs'};
+const TABS = {fridge:[6,46,1],phone:[38,52,4],audio:[12,20,3],watch:[18,22,2],tablet:[24,18,2],tv:[31,40,3]};
+const score = p => p.rating*Math.log10(p.reviews+10);
+
+/* ------------------------------------------------------------------ state */
+const S = {
+  view:'home', query:'', cat:null, tab:'products',
+  filters:{styles:[], depth:null, maxPrice:null, minCap:null, maxWidth:null, aiIds:null},
+  tags:{}, turns:[], mode:null, compare:[], sort:'rel', aiCollapsed:false, busy:false
+};
+const app = document.getElementById('app');
+const dock = document.getElementById('dock');
+const layer = document.getElementById('layer');
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ the answer engine (mocked; a real build would retrieve from the samsung.com catalog + support KB) */
+/* typo-tolerant category words: "refigerators", "refridgerator", "televison" */
+const FUZZ=['refrigerator','refrigerators','television','televisions','smartphone','smartphones','headphones','earbuds'];
+function dl(a,b){const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++)d[i][j]=i?Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1),i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]?d[i-2][j-2]+1:99):j}return d[a.length][b.length]}
+function fixTypos(q){return q.replace(/[a-z]{7,}/g,w=>{if(FUZZ.includes(w)) return w; let best=null,bd=3; for(const v of FUZZ){if(Math.abs(v.length-w.length)>2) continue; const x=dl(w,v); if(x<bd){bd=x;best=v}} return best&&bd<=(w.length>=10?2:1)?best:w})}
+function detectCat(q){
+  if(/fridge|refrigerat|freezer|ice maker|counter.?depth/.test(q)) return 'fridge';
+  if(/buds|earbud|headphone/.test(q)) return 'audio';
+  if(/watch/.test(q)) return 'watch';
+  if(/\btab\b|tablet/.test(q)) return 'tablet';
+  if(/\btv\b|television|oled|qled|the frame|tvs/.test(q)) return 'tv';
+  if(/galaxy|phone|\bs2\d|fold|flip|\ba\d\d\b|smartphone/.test(q)) return 'phone';
+  if(/\bcases?\b|screen protector/.test(q)) return 'acc';
+  return null;
+}
+function parsePrice(q){const m=q.match(/(?:under|below|less than|max|up to|budget(?: of)?|<)\s*\$?\s*([\d,.]+)\s*(k)?/); if(!m) return null; let v=parseFloat(m[1].replace(/,/g,'')); if(m[2]) v*=1000; return v}
+function fridgesWith(f){return P.filter(p=>p.cat==='fridge').filter(p=>(!f.maxPrice||p.price<=f.maxPrice)&&(!f.minCap||p.cap>=f.minCap)&&(!f.maxWidth||p.w+0.25<=f.maxWidth||(p.zero&&p.w<=f.maxWidth))&&(!f.depth||p.depth.includes(f.depth)))}
+
+function respond(raw){
+  const q = fixTypos(raw.toLowerCase().trim());
+  const first = S.turns.length===0;
+  const ctxCat = S.cat;
+  let F = {...S.filters};
+  const support = /won.?t connect|not connect|can.?t connect|pair|not working|broken|repair|reset|warranty|troubleshoot|fix my|keeps|disconnect|no sound|no picture|won.?t turn|not turn(ing)? on|doesn.?t work|isn.?t working|error code|frozen|stuck|blank screen|flicker|leaking|not cooling|too warm|clean (the|my)/.test(q);
+  const human = /specialist|human|agent|real person|talk to|call|live chat/.test(q);
+  const compare = /\bvs\.?\b|versus|compare|difference between|which is better/.test(q);
+  const said = detectCat(q);
+  let cat = said || ctxCat;
+
+  if(human || /still not|didn.?t (work|help)|no luck/.test(q)) return handoffAnswer();
+  if(/warranty|repair/.test(q)) return {kind:'answer',cat:S.cat,think:['Looking up warranty coverage'],lead:'Galaxy Buds have a **1-year limited warranty** from the purchase date. If yours is covered, a repair or replacement is free. Sign in and I can check it with your serial number.',steps:[['Find your serial number','It is printed inside the case lid, or in Galaxy Wearable › About earbuds.'],['Choose mail-in or walk-in','Walk-in repairs are available at Samsung Care centers and partner stores.'],['Track your repair','You get updates by email and in your Samsung account.']],chips:['Talk to a specialist','Find a store near me'],sources:['Samsung warranty information','Request a repair']};
+  if(support && !/bud|earbud/.test(q)){const k=kbAnswer(raw,null,'support'); if(k) return {...k,picks:[],chips:['Still not working','Check my warranty','Talk to a specialist']}}
+  if(support) return supportAnswer(q);
+
+  const named = cat==='phone'||!cat ? findModels(q) : [];
+  if(named.length) cat='phone';
+  if(cat==='phone' && (compare || named.length>=2)) return phoneCompare(q, named);
+  if(/\bcases?\b|\bcovers?\b|screen protectors?|\bfilms?\b|(buy|show|shop|need|get)\b.*\bs pens?\b|\bs pens? for\b|accessor(y|ies) for/.test(q) && (cat==='phone'||cat==='acc'||!said)){
+    return caseAnswer(q, named)}
+  if(cat==='phone' && first && /^(samsung )?galaxy (s26( ultra|\+)?|z fold8( ultra)?|z flip8|a57)( 5g)?$/.test(q)) return navAnswer(q);
+  if(cat==='phone' && !first){
+    if(/night|low.?light|better camera|best camera/.test(q) && !/show|phones/.test(q)) return phoneCamera();
+    if(/trade|s2[0-5]|old phone/.test(q)) return tradeIn(q);
+    if(/different|s25|upgrade|new in|what.?s new/.test(q)) return {kind:'answer',cat:'phone',think:['Comparing Galaxy S26 Ultra with S25 Ultra'],lead:'The **Galaxy S26 Ultra** keeps the S25 Ultra\'s shape but adds a **brighter, more private display**, a **faster processor** and **faster 60W charging**. If you have an S24 Ultra or older, it\'s a big step up.',bullets:['Privacy Display hides your screen from people next to you.','The 5x telephoto camera now has a wider aperture for better night zoom.','Same 5,000 mAh battery and built-in S Pen.'],picks:['p1'],tags:{p1:'New'},chips:['Which storage should I get?','Compare with Z Fold8 Ultra','How much is my S23 worth as a trade-in?'],sources:['Galaxy S26 Ultra specs']};
+    if(/storage|256|512|1 ?tb|gb/.test(q)) return {kind:'answer',cat:'phone',think:['Checking storage options and pricing'],lead:'**256GB** is enough for most people. Choose **512GB** if you shoot a lot of 4K or 8K video or keep big games on the phone. It costs **$120 more** and Samsung often runs double-storage deals.',bullets:['Galaxy phones don\'t take microSD cards, so pick for the next 3 to 4 years.','Photos backed up to the cloud don\'t count against your storage.'],chips:['Any deals right now?','Compare with Z Fold8 Ultra','How much is my S23 worth as a trade-in?'],sources:['Galaxy S26 Ultra buying options']};
+  }
+  const other=q.match(/\b(smart monitors?|monitors?|laptops?|galaxy book\w*|computers?|washers?|dryers?|washing machines?|laundry|dishwashers?|ranges?|ovens?|cooktops?|microwaves?|vacuums?|bespoke jet|soundbars?|speakers?|projectors?|freestyle|air conditioners?|air purifiers?|ssds?|memory cards?|galaxy ring|smart ?things)\b/);
+  if(other && !said) return missingCat(other[0], raw);
+  const acc=q.match(/water filters?|air filters?|\bfilters?\b|chargers?|cables?|wall mounts?|remotes?|bands?|straps?|screen protectors?|door panels?|accessor(y|ies)/);
+  if(acc) return accessoryAnswer(acc[0], said||ctxCat, raw);
+  if(cat==='fridge') return fridgeAnswer(q, first, F, compare, raw);
+  if(cat==='phone' && !looksLikeQuestion(q)){const r=phoneShop(q, first); if(r) return r}
+  if(cat==='tv' && !looksLikeQuestion(q)){const r=tvAnswer(q, first, raw); if(r) return r}
+  if(looksLikeQuestion(q)||!said){const k=kbAnswer(raw,said); if(k) return k}
+  if(said) return categoryAnswer(said, q);
+  return {kind:'answer',think:['Searching samsung.com'],lead:`I couldn't find products that match **"${esc(raw)}"** on samsung.com. I can help with phones, TVs, appliances, wearables and support questions.`,chips:['Best fridge for a family of 5','Compare S26 Ultra and Z Fold8 Ultra','Which TV is best for a bright room?'],sources:[],cat:null};
+}
+
+function fridgeAnswer(q, first, F, compare, raw){
+  if(/under|below|budget|less than/.test(q) && F.sale) delete F.sale;
+  const kw = /^(samsung |show me (some )?|best |all )?(refrigerators?|fridges?)$/.test(q);
+  const think = [];
+  // keyword search: results stay primary, AI offers to narrow
+  if(first && kw){
+    return {kind:'answer',cat:'fridge',filters:{...F},think:['Looking through refrigerators on samsung.com'],
+      popular:true,lead:`Samsung has **${fridgeAll().length} refrigerators** from **${fmt0(Math.min(...fridgeAll().map(p=>p.price)))} to ${fmt0(Math.max(...fridgeAll().map(p=>p.price)))}**. To find the right one, which style are you looking for? Most people pick a style first, then check the width of the space they have.`,
+      ask:{q:'Which style?',opts:[['French Door','French door refrigerators'],['Side-by-Side','side-by-side refrigerators'],['Counter depth','counter-depth refrigerators'],['Fits a 36" opening','refrigerators that fit a 36" opening'],['Not sure yet','best fridge for a family of 4']]},
+      chips:['Best for a family of 5 under $2,500','What\'s on sale right now?'],
+      sources:['Refrigerators','Refrigerator buying guide'],picks:[]};
+  }
+  // follow-up intents
+  if(/review|owners|people say|reliab|noise|quiet|complain/.test(q)){
+    const pk = S.lastPicks?.[0] ? byId[S.lastPicks[0]] : byId.f5;
+    return {kind:'answer',cat:'fridge',think:[`Reading ${pk.reviews.toLocaleString()} owner reviews`,'Summarizing what comes up most'],
+      lead:`Owners of the **${pk.name}** rate it **${pk.rating} out of 5**. They love the space and the dual ice maker. The most common complaint is the time it takes to make ice after installation.`,
+      reviews:[['Storage space',94],['Ice production',88],['Looks & finish',91],['Quiet running',79],['Ease of install',72]],
+      quote:{t:'Fits a week of groceries for our family of six, and the second ice maker means we never run out of ice in summer.',c:'Verified owner, 5 stars, Aug 2026'},
+      chips:['Compare the top 2','Any deals right now?','Talk to a specialist'],sources:[`${pk.name} reviews`],picks:S.lastPicks||[]};
+  }
+  if(compare || /top (2|two|3|three)|side by side/.test(q)){
+    const ids = (S.compare.length>=2? S.compare : (S.lastPicks||['f5','f10'])).slice(0,3);
+    return {kind:'answer',cat:'fridge',think:['Pulling specs for '+ids.length+' models','Lining up the differences'],
+      lead:`Here's how they compare. The **${byId[ids[0]].name.replace('Bespoke AI ','')}** has the best ratings, while the **${byId[ids[1]].name.replace('Bespoke AI ','')}** gives you ${byId[ids[1]].cap>byId[ids[0]].cap?'more space':'a lower price'}.`,
+      table:fridgeTable(ids),ids,chips:['What do owners say?','Which fit a 36" opening?','Talk to a specialist'],sources:['Product specifications'],picks:[]};
+  }
+  if(/deal|sale|discount|offer|save|promo|cheap/.test(q)){
+    let list = fridgesWith(F).filter(p=>p.was).sort((a,b)=>(b.was-b.price)-(a.was-a.price)).slice(0,3);
+    if(!list.length){ F={styles:[],depth:null,maxPrice:null,minCap:null,maxWidth:null,aiIds:null}; list=fridgesWith(F).filter(p=>p.was).sort((a,b)=>(b.was-b.price)-(a.was-a.price)).slice(0,3) }
+    return {kind:'answer',cat:'fridge',filters:{...F,sale:true},think:['Checking today\'s offers'],
+      lead:`**${fridgesWith({...F}).filter(p=>p.was).length} refrigerators** are on sale right now. The biggest saving is **${fmt0(list[0].was-list[0].price)} off** the ${list[0].name}.`,
+      bullets:['Free delivery and haul-away on refrigerators over $999.','Pay over 36 months at 0% APR with Samsung Financing. Subject to credit approval.','Offers are pulled live from samsung.com and refresh daily.'],
+      picks:list.map(p=>p.id),tags:Object.fromEntries(list.map(p=>[p.id,'Save '+fmt0(p.was-p.price)])),chips:['Which fit a 36" opening?','Compare the top 2','What do owners say?'],sources:['Refrigerator offers']};
+  }
+  // filter-building intents (can stack)
+  let changed=[];
+  const price = parsePrice(q); if(price){F.maxPrice=price; changed.push('price')}
+  const fam = q.match(/family of (\d+|two|three|four|five|six|seven)|(\d+|two|three|four|five|six) (people|kids|of us)/);
+  if(fam){const words={two:2,three:3,four:4,five:5,six:6,seven:7}; const n=parseInt(fam[1]||fam[2])||words[fam[1]||fam[2]]||4; F.minCap=Math.max(18, n*5); changed.push('family'); F.people=n}
+  if(/36|fit|opening|width|wide|space for/.test(q)){const m=q.match(/(\d{2}(?:\.\d+)?)\s*(?:"|in|inch)/); F.maxWidth=m?parseFloat(m[1]):36; changed.push('width')}
+  if(/counter.?depth|flush|shallow/.test(q)){F.depth='Counter Depth'; changed.push('depth')}
+  if(/french door/.test(q)){F.styles=['French Door']; changed.push('style')}
+  if(/side.?by.?side/.test(q)){F.styles=['Side-by-Side']; changed.push('style')}
+  if(!changed.length && (!first || looksLikeQuestion(q))){ // a question the filters can't answer: look it up on samsung.com
+    const k=kbAnswer(raw||q,'fridge'); if(k) return k;
+    return {kind:'answer',cat:'fridge',think:['Searching refrigerator guides'],lead:'Good question. In this prototype I can narrow by **budget, household size, width, depth and style**, compare models, summarize reviews and find deals.',chips:['Which fit a 36" opening?','Show counter-depth only','Compare the top 2','What do owners say?'],sources:[]};
+  }
+  const list = fridgesWith(F).filter(p=>!F.styles.length||F.styles.includes(p.style)).sort((a,b)=>score(b)-score(a));
+  if(!list.length){
+    return {kind:'answer',cat:'fridge',filters:F,think:[`Checking ${fridgeAll().length} refrigerators`],lead:'No refrigerators match all of that. The closest option is to **raise the budget** or **drop counter depth**, which frees up the most choices.',chips:['Show options under $3,000','Talk to a specialist'],sources:[]};
+  }
+  if(F.maxPrice) think.push(`Filtering to ${fmt0(F.maxPrice)} and under`);
+  if(F.minCap) think.push(`Sizing for ${F.people||'your'} people (about ${F.minCap} cu. ft.)`);
+  if(F.maxWidth) think.push(`Checking cutout widths against ${F.maxWidth}"`);
+  if(F.depth) think.push('Keeping counter-depth models');
+  think.push(`Ranking ${list.length} matches by ratings and reviews`);
+  const best=list[0], most=[...list].sort((a,b)=>b.cap-a.cap)[0], value=[...list].sort((a,b)=>a.price-b.price)[0];
+  const picks=[]; const tags={};
+  const add=(p,t)=>{if(p&&!picks.includes(p.id)){picks.push(p.id);tags[p.id]=t}};
+  add(best,'Best overall'); add(most,'Most space'); add(value,'Best value');
+  for(const p of list){if(picks.length>=3)break; add(p,'Also great')}
+  let lead, bullets=[];
+  if(changed.includes('width') && changed.length===1){
+    const all=fridgesWith({...F,maxWidth:null}).filter(p=>!F.styles.length||F.styles.includes(p.style));
+    const out=all.filter(p=>!list.includes(p));
+    lead = `**${list.length} of ${all.length}** fit a ${F.maxWidth}" opening once you leave the recommended 1/8" on each side. ${out.length?`The ${out.length} that don't are ${inch(out[0].w)} wide${out.some(p=>p.style==='Side-by-Side')?', mostly side-by-sides':''}.`:''}`;
+    bullets=[`The **${byId.f6.name.replace('Bespoke AI ','')} with Zero Clearance Fit** can sit flush between cabinets, so it fits with no gap.`,'Leave 1" behind the fridge for airflow, and check that the doors can open 90° to pull out the drawers.','Measure your doorways too. Most models need a 33" path with the doors removed.'];
+  } else {
+    const who = F.people?`a family of ${F.people}`:'you';
+    lead = `For ${who}${F.maxPrice?` under ${fmt0(F.maxPrice)}`:''}, I'd start with the **${best.name}** at **${fmt0(best.price)}**. It has ${best.cap} cu. ft., a ${best.ice.toLowerCase()} and a ${best.rating}-star rating from ${best.reviews.toLocaleString()} owners.`;
+    if(F.minCap) bullets.push(`Plan on about **5 cu. ft. per person**, so ${F.minCap}+ cu. ft. keeps up with weekly shopping.`);
+    if(most!==best) bullets.push(`Need more room? The **${most.name.replace('Bespoke AI ','')}** holds the most at ${most.cap} cu. ft.`);
+    if(value!==best) bullets.push(`The **${value.name.replace('Bespoke AI ','')}** is the lowest price at ${fmt0(value.price)}${value.style!=='French Door'?`, but it's a ${value.style.toLowerCase()}`:''}.`);
+    bullets.push(`${list.length} refrigerators match. They're filtered below.`);
+  }
+  return {kind:'answer',cat:'fridge',filters:F,think,lead,bullets,picks,tags,
+    chips: changed.includes('width')?['Show counter-depth only','Compare the top 2','What do owners say?']:['Which fit a 36" opening?','Compare the top 2','What do owners say about the ice maker?','Any deals right now?'],
+    sources:['Refrigerators','Dimensions & installation guide','Owner reviews']};
+}
+function fridgeTable(ids){
+  const ps=ids.map(i=>byId[i]);
+  const best=(k,dir)=>{const v=ps.map(p=>p[k]);const t=dir>0?Math.max(...v):Math.min(...v);return ps.map(p=>p[k]===t)};
+  const rows=[
+    ['Price',ps.map(p=>fmt0(p.price)),best('price',-1)],
+    ['Capacity',ps.map(p=>p.cap+' cu. ft.'),best('cap',1)],
+    ['Width',ps.map(p=>inch(p.w)),best('w',-1)],
+    ['Depth',ps.map(p=>inch(p.d)+(p.d<30?' (counter)':'')),best('d',-1)],
+    ['Ice',ps.map(p=>p.ice||'—'),ps.map(()=>false)],
+    ['Highlights',ps.map(p=>(p.feats||[]).slice(0,3).join(', ')||'—'),ps.map(()=>false)],
+    ['Rating',ps.map(p=>`${p.rating} (${p.reviews.toLocaleString()})`),best('rating',1)],
+  ];
+  return {head:ps.map(p=>p.name.replace('Bespoke AI ','')+(p.sub?' · '+p.sub.split('|').pop().trim():'')),rows};
+}
+function tradeIn(q){return {kind:'answer',cat:'phone',think:['Checking trade-in values'],lead:'An **S23 in good condition** is worth **up to $500** toward a Galaxy S26 Ultra or Z Fold8 Ultra right now. The credit is applied instantly at checkout.',bullets:['Values depend on model, storage and condition. You confirm them in checkout.','Ship your old phone back free within 15 days.'],chips:['Compare S26 Ultra and Z Fold8 Ultra','Show cases for Z Fold8 Ultra','Talk to a specialist'],sources:['Samsung Trade-In']}}
+function navAnswer(q){return {kind:'mini',cat:'phone',think:['Finding '+q.replace(/\b\w/g,c=>c.toUpperCase())],lead:`Here's the **${q.replace(/\b\w/g,c=>c.toUpperCase())}** and the phones people most often compare it with. Ask me anything about it.`,filters:{aiIds:['p1','p4','p2','p3']},chips:['How is it different from S25 Ultra?','Which storage should I get?','Compare with Z Fold8 Ultra'],sources:[]}}
+/* ---------- phone models: names people type, mapped to products and specs from samsung.com product pages (KB, Oct 2026) */
+const PHS={
+  p1:{scr:6.9,disp:'6.9"',g:214,mm:7.9,mah:5000,vid:31,cam:'200 MP wide + 50 MP 5x telephoto',mp:200,zoom:5,pen:true,stor:'256GB / 512GB / 1TB'},
+  p2:{scr:8.0,disp:'8.0" main, 6.5" cover',g:215,mm:4.1,mah:5000,vid:27,cam:'200 MP wide + 50 MP ultra-wide + 10 MP 3x telephoto',mp:200,zoom:3,pen:false,stor:'256GB / 512GB / 1TB'},
+  p3:{scr:7.6,disp:'7.6" main, 5.5" cover',g:201,mm:4.5,mah:4800,vid:26,cam:'Dual 50 MP (wide + ultra-wide)',mp:50,zoom:0,pen:false,stor:'256GB / 512GB / 1TB'},
+  k101:{scr:6.9,disp:'6.9" main, 4.1" cover',g:180,mm:6.1,mah:4300,vid:31,cam:'50 MP',mp:50,zoom:null,pen:false,stor:'256GB / 512GB'},
+  k100:{scr:6.3,disp:'6.3"',g:167,mm:7.2,mah:4300,vid:null,cam:'50 MP',mp:50,zoom:null,pen:false,stor:'128GB / 256GB / 512GB'},
+};
+const short=n=>n.replace(/^Samsung /,'').replace(/\s+\d+\s*(GB|TB)\b.*$/i,'').replace(/\s*\((Unlocked|AT&T|Verizon|T-Mobile)\)/i,'').replace(/ 5G$/,'').trim();
+function normQ(q){return ' '+q.toLowerCase().replace(/certified re-?newed|refurbished|refurb/g,'renewed').replace(/samsung|galaxy/g,' ')
+  .replace(/\bz\s*(?=fold|flip)/g,'').replace(/\b(fold|flip)\s+(\d)/g,'$1$2').replace(/\bs\s+(2\d)\b/g,'s$1')
+  .replace(/(\d)(ultra|plus|fe|edge)\b/g,'$1 $2').replace(/\+/g,' plus').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ')+' '}
+let MODELS=null;
+function models(){
+  if(MODELS) return MODELS;
+  const m=new Map();
+  for(const p of P.filter(p=>p.cat==='phone')){
+    const k=normQ(short(p.name)).trim(); if(!k) continue;
+    const cur=m.get(k);
+    const rank=x=>(PHS[x.id]?4:0)+(/^p\d/.test(x.id)?2:0)+(x.reviews?1:0);
+    if(!cur||rank(p)>rank(cur)){ if(cur) cur.dup=true; m.set(k,p) } else p.dup=true;
+  }
+  MODELS=[...m.entries()].map(([k,p])=>({k,p,s:PHS[p.id]||{},name:short(p.name)})).sort((a,b)=>b.k.length-a.k.length);
+  return MODELS;
+}
+function findModels(q){
+  let s=normQ(q); const out=[];
+  for(const m of models()){
+    const re=new RegExp('(^|\\s)'+m.k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=\\s)');
+    if(re.test(s)){ out.push(m); s=s.replace(re,' # ') }
+  }
+  // keep the order the person typed them in
+  const pos=m=>normQ(q).indexOf(' '+m.k+' ');
+  return out.sort((a,b)=>pos(a)-pos(b));
+}
+const modelOf=id=>models().find(m=>m.p.id===id)||{k:id,p:byId[id],s:PHS[id]||{},name:short(byId[id].name)};
+const list3=a=>a.length<3?a.join(' and '):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const B=s=>`**${s}**`;
+
+function phoneCompare(q,ms){
+  ms=ms||findModels(q);
+  if(ms.length<2 && S.lastPicks?.length>=2 && /top|these|them|those|both|the two|the 2/.test(q)) ms=S.lastPicks.filter(id=>byId[id]?.cat==='phone').map(modelOf);
+  if(ms.length<2){
+    const base=ms[0];
+    const opts=(base?[['Galaxy S26 Ultra'],['Galaxy Z Fold8 Ultra'],['Galaxy Z Fold8'],['Galaxy Z Flip8'],['Galaxy S26']].filter(([n])=>n.toLowerCase().replace('galaxy ','')!==base.name.toLowerCase().replace('galaxy ','')).slice(0,4).map(([n])=>[n,`Compare ${base.name} and ${n}`])
+      :[['S26 Ultra vs Z Fold8 Ultra','Compare S26 Ultra and Z Fold8 Ultra'],['Z Fold8 vs Z Fold8 Ultra','Compare Z Fold8 and Z Fold8 Ultra'],['S26 vs S26 Ultra','Compare S26 and S26 Ultra'],['Z Flip8 vs Z Fold8','Compare Z Flip8 and Z Fold8']]);
+    return {kind:'answer',cat:'phone',think:['Looking for the phones you named'],
+      lead:base?`Happy to compare the ${B(base.name)}. Which phone should I put it next to?`:`Which phones would you like to compare? Name two to four, like "Z Fold8, Z Fold8 Ultra and S26 Ultra".`,
+      ask:{q:base?'Compare it with':'Popular comparisons',opts},picks:base?[base.p.id]:[],sources:[]};
+  }
+  ms=ms.slice(0,4);
+  const val=(m,k)=>k==='price'?m.p.price:k==='rating'?(m.p.reviews?m.p.rating:null):k==='cam'?(m.s.mp!=null?m.s.mp+(m.s.zoom||0)*10:null):k==='bat'?(m.s.mah?m.s.mah+(m.s.vid||0)/100:null):m.s[k];
+  const winners=(k,dir)=>{const v=ms.map(m=>val(m,k));const nums=v.filter(x=>typeof x==='number');if(nums.length<2) return ms.map(()=>false);const t=dir>0?Math.max(...nums):Math.min(...nums);if(nums.every(x=>x===t)) return ms.map(()=>false);return v.map(x=>x===t)};
+  const dash=x=>x==null||x===''?'Not listed':x;
+  const rows=[
+    ['Price',ms.map(m=>fmt(m.p.price)+(m.p.was?` (was ${fmt0(m.p.was)})`:'')),winners('price',-1)],
+    ['Screen',ms.map(m=>dash(m.s.disp)),winners('scr',1)],
+    ['Weight',ms.map(m=>m.s.g?m.s.g+' g':'Not listed'),winners('g',-1)],
+    ['Thickness',ms.map(m=>m.s.mm?m.s.mm+' mm'+(m.s.disp?.includes('main')?' unfolded':''):'Not listed'),winners('mm',-1)],
+    ['Battery',ms.map(m=>m.s.mah?`${m.s.mah.toLocaleString()} mAh${m.s.vid?`, up to ${m.s.vid} hrs video`:''}`:'Not listed'),winners('bat',1)],
+    ['Cameras',ms.map(m=>dash(m.s.cam)),winners('cam',1)],
+    ['S Pen',ms.map(m=>m.s.pen==null?'Not listed':m.s.pen?'Built in':'Not supported'),ms.map(m=>!!m.s.pen&&ms.some(x=>x.s.pen===false))],
+    ['Storage',ms.map(m=>dash(m.s.stor||(m.p.opts||[]).join(' / '))),ms.map(()=>false)],
+    ['Rating',ms.map(m=>m.p.reviews?`${m.p.rating} (${m.p.reviews.toLocaleString()})`:'No reviews yet'),winners('rating',1)],
+  ];
+  // what each phone is best at, from the table
+  const why={}; ms.forEach(m=>why[m.k]=[]);
+  const W=(k,dir,txt)=>{const w=winners(k,dir); ms.forEach((m,j)=>{if(w[j]) why[m.k].push(txt(m))})};
+  W('scr',1,m=>`the biggest screen (${m.s.disp.split(',')[0]})`);
+  W('price',-1,m=>`the lowest price (${fmt0(m.p.price)})`);
+  W('zoom',1,m=>`the longest optical zoom (${m.s.zoom}x)`);
+  W('bat',1,m=>`the longest battery life (${m.s.mah.toLocaleString()} mAh${m.s.vid?`, up to ${m.s.vid} hrs video`:''})`);
+  W('g',-1,m=>`the lightest build (${m.s.g} g)`);
+  ms.forEach(m=>{if(m.s.pen&&ms.some(x=>x.s.pen===false)) why[m.k].unshift('a built-in S Pen')});
+  const bullets=ms.map(m=>{
+    if(why[m.k].length) return `Choose the ${B(m.name)} for ${list3(why[m.k].slice(0,3))}.`;
+    const pricier=ms.filter(x=>x!==m&&x.p.price>m.p.price&&x.k.startsWith(m.k)).concat(ms.filter(x=>x!==m&&x.p.price>m.p.price))[0];
+    return pricier?`The ${B(m.name)} costs ${fmt0(pricier.p.price-m.p.price)} less than the ${pricier.name}${m.s.g&&pricier.s.g&&m.s.g<pricier.s.g?` and is ${pricier.s.g-m.s.g} g lighter`:''}.`:`The ${B(m.name)} is rated ${m.p.rating} by ${m.p.reviews.toLocaleString()} owners.`;
+  });
+  const missing=ms.filter(m=>!m.s.disp);
+  if(missing.length) bullets.push(`Detailed specs for the ${list3(missing.map(m=>m.name))} aren't in the samsung.com data I have yet, so those rows say "Not listed".`);
+  const fold=ms.find(m=>/fold|flip/.test(m.k));
+  return {kind:'answer',cat:'phone',think:[`Pulling specs for ${ms.length} phones from samsung.com`,'Lining up screen, camera, battery and price'],
+    lead:`Here's how the ${list3(ms.map(m=>B(m.name)))} compare. Each one wins on something different:`,
+    bullets,table:{head:ms.map(m=>m.name),rows},
+    picks:ms.map(m=>m.p.id),tags:Object.fromEntries(ms.map(m=>[m.p.id,(why[m.k][0]||'In this comparison').replace(/^(the|a) /,'').replace(/ \(.*$/,'').replace(/^./,c=>c.toUpperCase())])),
+    chips:['Which has the better camera for night photos?','Which one is best for travel?',fold?`Show cases for ${fold.name}`:'Which storage should I get?'],
+    sources:ms.filter(m=>m.p.url).map(m=>({t:m.name,u:m.p.url}))};
+}
+function phoneCamera(){
+  const ids=(S.lastPicks||[]).filter(id=>PHS[id]); const ms=(ids.length?ids:['p1','p2','p3']).map(modelOf);
+  const r=[...ms].sort((a,b)=>(b.s.mp-a.s.mp)||((b.s.zoom||0)-(a.s.zoom||0)));
+  const top=r[0], next=r[1];
+  return {kind:'answer',cat:'phone',think:['Comparing camera hardware from samsung.com specs'],
+    lead:`Of these, the ${B(top.name)} has the strongest camera hardware: ${top.s.cam}.${next?` The ${next.name} has ${next.s.cam}.`:''}`,
+    bullets:[top.s.zoom&&next&&(next.s.zoom||0)<top.s.zoom?`For zoomed shots at night, the longer ${top.s.zoom}x telephoto keeps more detail than digital zoom.`:null,'Samsung lists Nightography low-light processing across the Galaxy S and Z lines.'].filter(Boolean),
+    picks:[top.p.id,...(next?[next.p.id]:[])],ids:[top.p.id,...(next?[next.p.id]:[])],tags:{[top.p.id]:'Best camera'},chips:['Which one is best for travel?','How much is my S23 worth as a trade-in?','Talk to a specialist'],sources:[{t:top.name,u:top.p.url||'https://www.samsung.com/us/smartphones/'}]};
+}
+function missingCat(what,raw){
+  const k=kbAnswer(raw,null); const found=k&&!/couldn't find/.test(k.lead);
+  return {kind:'answer',cat:null,think:[`Looking for ${what} on samsung.com`],
+    lead:`Samsung sells ${what.replace(/s?$/,'s')}, but they aren't in the samsung.com data this prototype has yet. It covers phones, TVs, refrigerators, earbuds, watches and tablets, so I won't guess at models, prices or rankings.`,
+    bullets:[],picks:[],ids:[],sources:found?k.sources:[],
+    ask:{q:'Want to try something it covers?',opts:[['Phones','galaxy phones'],['TVs','tv'],['Refrigerators','refrigerator'],['Tablets','tablet']]},chips:['Talk to a specialist']};
+}
+function accessoryAnswer(what,cat,raw){
+  const name={fridge:'refrigerator',phone:'phone',tv:'TV',watch:'watch',audio:'earbuds',tablet:'tablet'}[cat]||'product';
+  const water=/water|filter/.test(what)&&(cat==='fridge'||!cat);
+  const k=kbAnswer(raw,cat);
+  const found=k&&!/couldn't find/.test(k.lead);
+  return {kind:'answer',cat:water?'fridge':cat,think:[`Looking for ${what} on samsung.com`],
+    lead:(water?`Samsung refrigerator water filters are model-specific, so the right one depends on the refrigerator you have. Filters and other accessories aren't in the samsung.com data this prototype has yet, so I won't guess at part numbers or prices.`
+      :`Official ${what} for your ${name} are sold on samsung.com. Accessories aren't in the samsung.com data this prototype has yet, so I won't guess at models or prices.`),
+    bullets:[],
+    ask:water?{q:'Which refrigerator do you have?',opts:[['French Door','water filter for a French door refrigerator'],['Side-by-Side','water filter for a side-by-side refrigerator'],['I\'ll check the model number','Talk to a specialist']]}:null,
+    picks:[],ids:[],sources:found?k.sources:[{t:'Samsung accessories',u:'https://www.samsung.com/us/accessories/'}],chips:['Talk to a specialist']};
+}
+function accModels(){return [...new Set(P.filter(p=>p.cat==='acc').flatMap(p=>p.fits))].map(m=>({m,k:normQ(m).trim()})).sort((a,b)=>b.k.length-a.k.length)}
+function caseAnswer(q,ms,type){
+  type=type!==undefined?type:/screen protector|\bfilm\b/.test(q)?'screen protector':/s pens?\b/.test(q)&&!/case/.test(q)?'S Pen':/accessor/.test(q)?null:'case';
+  let nq=normQ(q), model=null;
+  for(const a of accModels()){if(new RegExp('(^|\\s)'+a.k.replace(/[+]/g,'\\+')+'(?=\\s)').test(nq)){model=a.m;break}}
+  if(!model&&S.cat==='acc'&&S.filters.fits?.length===1) model=S.filters.fits[0];
+  if(!model){const m=ms[0]||((S.lastPicks||[]).filter(id=>byId[id]?.cat==='phone').map(modelOf)[0]); if(m) model=m.name}
+  const word={case:['case','cases'],'screen protector':['screen protector','screen protectors'],'S Pen':['S Pen','S Pens']}[type]||['accessory','accessories'];
+  if(!model) return {kind:'answer',cat:'acc',think:['Finding official accessories'],lead:`Which phone are the ${word[1]} for? Official ${word[1]} are made for one model, so they only fit that phone.`,
+    ask:{q:'Your phone',opts:['Galaxy S26 Ultra','Galaxy S26','Galaxy Z Fold8 Ultra','Galaxy Z Fold8','Galaxy Z Flip8'].map(m=>[m,`${word[1]} for ${m}`])},picks:[],ids:[],sources:[]};
+  const all=P.filter(p=>p.cat==='acc'&&p.fits.includes(model));
+  const pr=parsePrice(q);
+  const list=all.filter(p=>(!type||p.atype===type)&&(!pr||p.price<=pr)).sort((a,b)=>score(b)-score(a));
+  const pm=models().find(x=>x.name===model);
+  if(!list.length) return {kind:'answer',cat:'acc',think:[`Looking for official ${model} ${word[1]}`],
+    lead:`I couldn't find official ${word[1]} for the ${B(model)} in the samsung.com data.${all.length?` There ${all.length===1?'is':'are'} ${all.length} other official accessor${all.length===1?'y':'ies'} for it.`:''}`,
+    filters:{...EMPTY(),fits:[model]},picks:all.slice(0,3).map(p=>p.id),chips:['Talk to a specialist'],sources:[{t:'Samsung mobile accessories',u:'https://www.samsung.com/us/mobile-accessories/'}]};
+  const best=list[0], low=[...list].sort((a,b)=>a.price-b.price)[0];
+  const picks=[best,...(low!==best?[low]:[]),...list.filter(p=>p!==best&&p!==low)].slice(0,3);
+  const tags={[best.id]:best.reviews&&best.rating>=4?'Top rated':'Top pick'}; if(low!==best) tags[low.id]='Lowest price';
+  const magnet=list.filter(p=>/magnet/i.test(p.name)).length;
+  const bullets=[];
+  if(type==='case'&&magnet) bullets.push(`${magnet} of the ${list.length} are Magnet cases.`);
+  if(low!==best) bullets.push(`The lowest price is the ${B(low.name)} at ${fmt(low.price)}.`);
+  if(type==='case'&&pm?.s.pen===false) bullets.push(`The ${model} doesn't support the S Pen, so there are no S Pen cases for it.`);
+  bullets.push(list.length>1?`All ${list.length} are below. Use the filters to narrow by price or rating.`:`It's shown below.`);
+  return {kind:'answer',cat:'acc',filters:{...EMPTY(),fits:[model],atype:type?[type]:[],maxPrice:pr||null,aiIds:list.map(p=>p.id)},think:[`Finding official ${model} ${word[1]}`,`Checking ${list.length} ${word[1]} on samsung.com`],
+    lead:`Samsung has ${B(list.length+' official '+(list.length===1?word[0]:word[1]))} for the ${B(model)}${pr?` under ${fmt0(pr)}`:''}${list.length>1?`, from ${B(range(list))}`:''}. ${best.reviews&&best.rating>=4?`The ${B(best.name)} is the best rated, ${best.rating} stars from ${best.reviews} review${best.reviews>1?'s':''}.`:`I'd start with the ${B(best.name)} at ${fmt(best.price)}.`}`,
+    bullets,picks:picks.map(p=>p.id),tags,
+    chips:[type!=='screen protector'?`Screen protectors for ${model}`:`Cases for ${model}`,`Cases under $30 for ${model}`,'Talk to a specialist'],
+    sources:picks.map(p=>({t:p.name,u:p.url}))};
+}
+
+/* ---------- shopping requests: rank on the data, ask when the request is too broad */
+const NEEDS={
+  camera:{re:/camera|photo|zoom|picture|selfie/,txt:'a great camera',sc:s=>s.mp?s.mp/200*.6+(s.zoom||0)/5*.4:null,why:s=>s.cam},
+  battery:{re:/battery|all.?day|travel|trip|long.?lasting/,txt:'long battery life',sc:s=>s.mah?(s.mah-4000)/1000+(s.vid||0)/31*.4:null,why:s=>`a ${s.mah.toLocaleString()} mAh battery${s.vid?` (up to ${s.vid} hours of video)`:''}`},
+  big:{re:/big(ger|gest)? screen|large screen|tablet|multitask|movies?|video|reading/,txt:'a big screen',sc:s=>s.scr?s.scr/8:null,why:s=>`a ${s.disp} screen`},
+  small:{re:/small|compact|one.?hand|pocket/,txt:'a compact phone',sc:s=>s.scr?(7.2-s.scr):null,why:s=>`a ${s.disp} screen`},
+  light:{re:/lightweight|lightest|light phone|thin|slim/,txt:'a light phone',sc:s=>s.g?(230-s.g)/60:null,why:s=>`${s.g} g`},
+  pen:{re:/s pen|stylus|note.?taking|draw/,txt:'the S Pen',sc:s=>s.pen==null?null:s.pen?1:0,why:()=>'a built-in S Pen'},
+  cheap:{re:/cheap|affordable|budget|value|inexpensive/,txt:'good value',sc:null,why:null},
+};
+function filterList(list,f){
+  if(KB.ready){models(); list=list.filter(p=>!p.dup)}
+  if(f.styles?.length) list=list.filter(p=>f.styles.includes(p.style));
+  if(f.depth) list=list.filter(p=>p.depth?.includes(f.depth));
+  if(f.minCap) list=list.filter(p=>p.cap>=f.minCap);
+  if(f.maxWidth) list=list.filter(p=>p.w+0.25<=f.maxWidth||(p.zero&&p.w<=f.maxWidth));
+  if(f.series?.length) list=list.filter(p=>f.series.includes(fx(p).series));
+  if(f.stor) list=list.filter(p=>fx(p).stor?.includes(f.stor));
+  if(f.pen) list=list.filter(p=>fx(p).pen);
+  if(f.tvType?.length) list=list.filter(p=>f.tvType.includes(fx(p).type));
+  if(f.size){const b=SIZEB.find(b=>b[0]===f.size); if(b) list=list.filter(p=>fx(p).sizes?.some(s=>s>=b[2]&&s<=b[3]))}
+  if(f.res) list=list.filter(p=>fx(p).res===f.res);
+  if(f.year) list=list.filter(p=>f.year==2024?(fx(p).year||0)<=2024:fx(p).year==f.year);
+  if(f.fits?.length) list=list.filter(p=>p.fits?.some(m=>f.fits.includes(m)));
+  if(f.atype?.length) list=list.filter(p=>f.atype.includes(p.atype));
+  if(f.minRating) list=list.filter(p=>p.rating>=f.minRating);
+  if(f.sale) list=list.filter(p=>p.was);
+  if(f.maxPrice) list=list.filter(p=>p.price<=f.maxPrice);
+  return list;
+}
+const SIZEB=[['s43','Up to 43"',0,43],['s55','50" to 58"',50,58],['s65','65"',60,65],['s75','70" to 77"',70,77],['s85','83" to 85"',83,85],['s98','98" and up',98,999]];
+function fx(p){
+  if(p._fx) return p._fx; const n=p.name, t=n+' '+(p.sub||''), o={};
+  if(p.cat==='phone'){
+    o.series=/re-?newed/i.test(n)?'Certified Re-Newed':/fold/i.test(n)?'Z Fold':/flip/i.test(n)?'Z Flip':/galaxy a\d/i.test(n)?'A series':'S series';
+    o.stor=(p.opts||[]).filter(x=>/GB|TB/.test(x)); if(!o.stor.length){const m=n.match(/(\d+\s?(GB|TB))/i); if(m) o.stor=[m[1].replace(' ','')]}
+    o.pen=/\bS2\d Ultra/i.test(n);
+  }
+  if(p.cat==='tv'){
+    o.type=/micro rgb/i.test(n)?'Micro RGB':/micro led/i.test(n)?'Micro LED':/terrace/i.test(n)?'Outdoor':/frame/i.test(n)?'The Frame':/oled/i.test(n)?'OLED':/neo qled/i.test(n)?'Neo QLED':/mini led/i.test(n)?'Mini LED':/qled/i.test(n)?'QLED':'Crystal UHD';
+    const m=n.match(/(\d{2,3})\s*(?:inch|"|”)/i); o.sizes=[parseInt(p.osel)||(m&&+m[1])].filter(Boolean); // the size shown on the card, so its price matches
+    o.res=/8k/i.test(t)?'8K':/4k|uhd/i.test(t)?'4K':'HD';
+    o.year=+((t.match(/\((20\d\d)\)/)||[])[1])||null;
+  }
+  return p._fx=o;
+}
+const TV_TYPES=['OLED','Neo QLED','QLED','Mini LED','Crystal UHD','The Frame','Micro RGB','Outdoor'];
+function popular(cat,f){return filterList(P.filter(p=>p.cat===cat),f||{}).sort((a,b)=>score(b)-score(a))}
+const range=l=>{const a=Math.min(...l.map(p=>p.price)),b=Math.max(...l.map(p=>p.price));return a===b?fmt0(a):`${fmt0(a)} to ${fmt0(b)}`};
+
+function phoneShop(q,first){
+  const F={...(S.cat==='phone'?S.filters:EMPTY()),aiIds:null}; let narrowed=false;
+  const needs=Object.keys(NEEDS).filter(k=>NEEDS[k].re.test(q));
+  const price=parsePrice(q); if(price){F.maxPrice=price; narrowed=true}
+  if(/renewed|refurb/.test(q)){F.series=['Certified Re-Newed'];narrowed=true}
+  else if(/fold/.test(q)){F.series=['Z Fold'];narrowed=true}
+  else if(/flip/.test(q)){F.series=['Z Flip'];narrowed=true}
+  else if(/\ba series\b|galaxy a\b/.test(q)){F.series=['A series'];narrowed=true}
+  else if(/\bs series\b/.test(q)){F.series=['S series'];narrowed=true}
+  if(needs.includes('pen')) F.pen=true;
+  if(!needs.length&&!narrowed){
+    if(!first&&!/^(samsung |galaxy |show me (some )?|all |best )*(galaxy )?(smart)?phones?$/.test(q)) return null;
+    const all=popular('phone',{});
+    return {kind:'answer',cat:'phone',filters:{...F},popular:true,think:['Looking through phones on samsung.com'],
+      lead:`Samsung has ${B(all.length+' phones')} on samsung.com, from ${B(range(all))}. Which kind of phone are you after? I'll narrow these down from there.`,
+      ask:{q:'What matters most?',opts:[['Best camera','phones with the best camera'],['Biggest screen','foldable phone with a big screen'],['Compact and light','compact flip phone'],['Long battery life','phone with the longest battery life'],['Best value under $600','best value phone under $600']]},
+      chips:['Compare Z Fold8, Z Fold8 Ultra and S26 Ultra','Which phones have the S Pen?'],sources:[{t:'Smartphones',u:'https://www.samsung.com/us/smartphones/'}],picks:[]};
+  }
+  let pool=filterList(P.filter(p=>p.cat==='phone'),F);
+  if(!F.series?.includes('Certified Re-Newed')) pool=pool.filter(p=>fx(p).series!=='Certified Re-Newed'||F.series?.length);
+  if(!pool.length) return {kind:'answer',cat:'phone',filters:F,think:['Checking phones on samsung.com'],lead:`No phones match all of that${price?` under ${fmt0(price)}`:''}. Raising the budget or trying Certified Re-Newed phones opens up more options.`,chips:['Show Certified Re-Newed phones','Talk to a specialist'],sources:[]};
+  const specNeeds=needs.filter(k=>NEEDS[k].sc);
+  const maxPop=Math.max(...pool.map(score))||1, maxP=Math.max(...pool.map(p=>p.price));
+  const rank=p=>{const s=PHS[p.id]||{}; let v=.25*score(p)/maxPop;
+    for(const k of specNeeds){const x=NEEDS[k].sc(s); v+= x==null?-.3:x}
+    if(needs.includes('cheap')||price) v+=.5*(1-p.price/maxP);
+    return v};
+  const ranked=[...pool].sort((a,b)=>rank(b)-rank(a));
+  const picks=ranked.slice(0,3);
+  const reasons=p=>{const s=PHS[p.id]; const r=s?specNeeds.map(k=>NEEDS[k].why(s)).filter(Boolean):[]; return r.length?list3([...new Set(r)]):`${p.rating} stars from ${p.reviews.toLocaleString()} owners`};
+  const want=needs.map(k=>NEEDS[k].txt);
+  const top=picks[0];
+  const bullets=picks.slice(1).map(p=>`The ${B(short(p.name))} (${fmt0(p.price)}) has ${reasons(p)}.`);
+  if(specNeeds.length&&pool.some(p=>!PHS[p.id])) bullets.push('Ranked on screen, camera, battery and weight from samsung.com spec pages. Phones without full specs in the data rank by ratings.');
+  bullets.push(`${pool.length} phone${pool.length>1?'s':''} match${pool.length>1?'':'es'}. They're below, best match first.`);
+  const tag0={camera:'Best camera',battery:'Longest battery',big:'Biggest screen',small:'Most compact',light:'Lightest',pen:'S Pen',cheap:'Best value'}[needs[0]]||'Best match';
+  return {kind:'answer',cat:'phone',filters:{...F,aiIds:ranked.map(p=>p.id)},think:['Reading phone specs from samsung.com',want.length?`Ranking ${pool.length} phones for ${list3(want)}`:`Ranking ${pool.length} phones`],
+    lead:`For ${want.length?list3(want):'you'}${price?` under ${fmt0(price)}`:''}, I'd start with the ${B(short(top.name))} at ${B(fmt(top.price))}. It has ${reasons(top)}.`,
+    bullets,picks:picks.map(p=>p.id),tags:Object.fromEntries(picks.map((p,i)=>[p.id,i?'Also consider':tag0])),
+    chips:[`Compare ${list3(picks.slice(0,3).map(p=>short(p.name)))}`,'Which storage should I get?','Any deals right now?'],sources:picks.filter(p=>p.url).map(p=>({t:short(p.name),u:p.url}))};
+}
+
+function tvAnswer(q,first,raw){
+  const F={...(S.cat==='tv'?S.filters:EMPTY()),aiIds:null}; let narrowed=false;
+  const sz=q.match(/(\d{2,3})\s*(?:"|”|-?\s?inch|-?\s?in\b)/); if(sz){const n=+sz[1]; const b=SIZEB.find(b=>n>=b[2]&&n<=b[3])||SIZEB.reduce((a,b)=>Math.abs(b[2]-n)<Math.abs(a[2]-n)?b:a); F.size=b[0]; narrowed=true}
+  else if(/big|huge|large/.test(q)){F.size='s85';narrowed=true}
+  const price=parsePrice(q); if(price){F.maxPrice=price;narrowed=true}
+  const ty=/neo qled/.test(q)?'Neo QLED':/\boled/.test(q)?'OLED':/\bqled/.test(q)?'QLED':/frame|art mode/.test(q)?'The Frame':/crystal|\buhd\b/.test(q)?'Crystal UHD':/mini led/.test(q)?'Mini LED':/micro rgb/.test(q)?'Micro RGB':/outdoor|terrace|patio|backyard/.test(q)?'Outdoor':null;
+  if(ty){F.tvType=[ty];narrowed=true}
+  if(/8k/.test(q)){F.res='8K';narrowed=true}
+  const bright=/bright|sun|window|glare/.test(q), gaming=/gam(e|ing)|xbox|playstation|ps5/.test(q), cheap=/cheap|budget|affordable|value/.test(q);
+  if(!narrowed&&!bright&&!gaming&&!cheap){
+    if(!first&&!/^(samsung |show me (some )?|all |best |smart )*(tvs?|televisions?)$/.test(q)) return null;
+    const all=popular('tv',{});
+    return {kind:'answer',cat:'tv',filters:{...F},popular:true,think:['Looking through TVs on samsung.com'],
+      lead:`Samsung has ${B(all.length+' TVs')} on samsung.com, from ${B(range(all))}. Most people decide on ${B('size')}, ${B('screen type')} and ${B('budget')} first. Where will it go?`,
+      ask:{q:'Tell me about the room',opts:[['Bright living room','TV for a bright room'],['Gaming','best TV for gaming'],['65" under $1,500','65 inch TV under $1,500'],['85" and bigger','85 inch TVs'],['Looks like art','The Frame TVs']]},
+      chips:['What is the difference between OLED and QLED?','What size TV should I get?'],sources:[{t:'TVs',u:'https://www.samsung.com/us/televisions-home-theater/tvs/'}],picks:[]};
+  }
+  if(gaming&&!ty) F.tvType=['OLED','Neo QLED'];
+  let list=filterList(P.filter(p=>p.cat==='tv'),F).filter(p=>fx(p).type!=='Outdoor'||ty==='Outdoor');
+  if(!list.length) return {kind:'answer',cat:'tv',filters:F,think:['Checking TVs on samsung.com'],lead:'No TVs match all of that. A bigger budget or a different screen type opens up more options.',chips:['Show TVs under $1,000','What is the difference between OLED and QLED?'],sources:[]};
+  const tvs=p=>score(p)*(p.price>5000&&!price?0.5:1); // very expensive sets only lead when the budget allows
+  list.sort((a,b)=>tvs(b)-tvs(a)+(cheap?(a.price-b.price)/2000:0));
+  if(bright&&list.includes(byId.v1)) list=[byId.v1,...list.filter(p=>p!==byId.v1)];
+  const pick=list[0], low=[...list].sort((a,b)=>a.price-b.price)[0];
+  const picks=[pick,...list.filter(p=>p!==pick).slice(0,2)];
+  const desc=[F.size&&SIZEB.find(b=>b[0]===F.size)[1],F.tvType?.join(' or '),F.res,price&&`under ${fmt0(price)}`].filter(Boolean).join(', ');
+  return {kind:'answer',cat:'tv',filters:{...F,aiIds:list.map(p=>p.id)},think:['Reading TV specs from samsung.com',`Ranking ${list.length} TVs by fit, ratings and price`],
+    lead:bright&&pick===byId.v1?`For a bright room I'd pick the ${B(pick.name)}. Its Glare-Free OLED screen keeps reflections down when the sun hits it, and it's the brightest OLED Samsung makes.`
+      :`${B(list.length+' TVs')} match${desc?` (${desc})`:''}. I'd start with the ${B(pick.name)} at ${B(fmt(pick.price))}, rated ${pick.rating} by ${pick.reviews.toLocaleString()} owners.`,
+    bullets:[gaming?'OLED and Neo QLED models are listed first for gaming, then sorted by owner ratings.':null,low!==pick?`Lowest price that matches: the ${B(low.name)} at ${fmt0(low.price)}.`:null].filter(Boolean),
+    picks:picks.map(p=>p.id),tags:Object.fromEntries(picks.map((p,i)=>[p.id,i?'Also consider':'Top pick'])),
+    chips:['What size TV should I get?','What is the difference between OLED and QLED?','Any deals right now?'],sources:picks.filter(p=>p.url).map(p=>({t:p.name,u:p.url}))};
+}
+function categoryAnswer(cat,q){
+  const list=P.filter(p=>p.cat===cat).sort((a,b)=>score(b)-score(a));
+  const price=parsePrice(q); const fl=price?list.filter(p=>p.price<=price):list; const pick=(fl[0]||list[0]);
+  const tags={}; const picks=[pick.id, ...fl.filter(p=>p!==pick).slice(0,2).map(p=>p.id)];
+  picks.forEach((id,i)=>tags[id]=i?'Also consider':'Most popular');
+  return {kind:'answer',cat,filters:{maxPrice:price||null,aiIds:null},popular:!price,think:[`Searching ${CAT_LABEL[cat]}`,'Ranking by ratings and price'],
+    lead:`The most popular choice is the ${B(pick.name)} at ${B(fmt(pick.price))}, rated ${pick.rating} by ${pick.reviews.toLocaleString()} owners.`,
+    bullets:[],picks,tags,chips:['What\'s the difference between these?','Any deals right now?','Talk to a specialist'],sources:[CAT_LABEL[cat][0].toUpperCase()+CAT_LABEL[cat].slice(1)]};
+}
+
+function supportAnswer(q){
+  const isBuds=/bud|earbud/.test(q);
+  return {kind:'answer',cat:isBuds?'audio':(S.cat||'phone'),tab:'support',think:['Checking Samsung support articles','Matching your model'],
+    lead: isBuds?'Most connection problems with **Galaxy Buds** are fixed by resetting the pairing. Try these steps in order. It takes about two minutes.':'Here are the steps that fix this most often.',
+    steps: isBuds?[
+      ['Put both buds in the case','Close the lid for 7 seconds, then open it. This restarts the buds.'],
+      ['Forget and re-pair','On your phone go to Settings › Connections › Bluetooth, tap the gear next to your Buds and choose Unpair. Then open the case near your phone.'],
+      ['Reset in Galaxy Wearable','Open the Galaxy Wearable app › Earbuds settings › Reset. Your settings go back to default.'],
+      ['Update the software','In Galaxy Wearable, choose Earbuds software update.']
+    ]:[['Restart your device','Hold the side key and volume down, then tap Restart.'],['Check for updates','Settings › Software update › Download and install.']],
+    fixq:true, chips:['Still not working','Check my warranty','Book a repair'],sources:['Galaxy Buds won\'t connect','Galaxy Wearable app help']};
+}
+function handoffAnswer(){return {kind:'answer',cat:S.cat,think:['Finding an available specialist'],lead:'A Samsung specialist can help with this. I\'ll **share this conversation** with them so you don\'t have to repeat yourself.',handoff:true,chips:[],sources:[]}}
+
+/* ------------------------------------------------------------------ views */
+function go(view){S.view=view; render(); scrollTo({top:0})}
+function renderHome(){
+  dock.hidden=true;
+  app.innerHTML = `
+  <section class="hero"><div class="wrap">
+    <div><h1>Galaxy Z Fold8 Ultra</h1><p>Opens to an 8.2" screen. Closes to fit your pocket.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn inv">Buy now</button><button class="btn ghost-inv">Learn more</button></div></div>
+    <div class="art">${art(byId.p2)}</div>
+  </div></section>
+  <div class="wrap">
+    <div class="cats">${[['Mobile','p1'],['TV & AV','v1'],['Appliances','f5'],['Wearables','w1'],['Audio','b1'],['Tablets','t1']].map(([n,id])=>`<button class="cat" data-q="${n==='Appliances'?'refrigerator':n==='Mobile'?'galaxy phones':n==='TV & AV'?'tv':n==='Audio'?'galaxy buds':n==='Tablets'?'tablet':'galaxy watch'}">${art(byId[id])}${n}</button>`).join('')}</div>
+    <p class="home-hint">Start where shoppers do: tap the search icon in the navigation bar. The search popup is unchanged from samsung.com today. Press Enter on any query to land on the new search page.</p>
+  </div>${footer()}`;
+}
+function footer(){return `<footer class="site-foot"><div class="wrap"><div class="cols">
+  <div><h6>Shop</h6><p>Shop Home</p><p>Buy Direct Get More</p><p>AI Living</p><p>Samsung Rewards</p></div>
+  <div><h6>Product</h6><p>Galaxy Smartphone</p><p>TVs</p><p>Refrigerators</p><p>Laundry</p></div>
+  <div><h6>Support</h6><p>Support Home</p><p>Track Repair</p><p>Order Help</p><p>Chat</p></div>
+  <div><h6>Account</h6><p>Samsung Account</p><p>Orders</p><p>My Page</p></div>
+  <div><h6>Sustainability</h6><p>Overview</p><p>Environment</p><p>Accessibility</p></div>
+  </div><p class="legal">Copyright © 1995-2026 SAMSUNG. All rights reserved. Prototype for design review: products, specs, FAQs and support articles are crawled from samsung.com (Oct 2026). Prices are snapshots from that date.</p></div></footer>`}
+
+const EMPTY=()=>({fits:[],atype:[],styles:[],depth:null,maxPrice:null,minCap:null,maxWidth:null,aiIds:null,sale:null,series:[],stor:null,pen:null,tvType:[],size:null,res:null,year:null,minRating:null});
+const clone=o=>JSON.parse(JSON.stringify(o));
+S.layout='chat';
+S.aiKeys=new Set(); S.resShown=5; S.pane='chat'; S.draft=''; S.sheet=false;
+const LAYOUT_NAMES={chat:'A · Conversation',split:'B · Chat + results',answer:'C · Answer above results'};
+
+function visibleProducts(){
+  const f=S.filters; let list=filterList(P.filter(p=>p.cat===S.cat),f);
+  const po=id=>{const i=(S.lastPicks||[]).indexOf(id);return i<0?99:i};
+  const ao=id=>{const o=f.aiIds||[];const i=o.indexOf(id);return i<0?99:i};
+  if(S.sort==='low') list.sort((a,b)=>a.price-b.price);
+  else if(S.sort==='high') list.sort((a,b)=>b.price-a.price);
+  else if(S.sort==='rating') list.sort((a,b)=>b.rating-a.rating);
+  else list.sort((a,b)=>(po(a.id)-po(b.id))||(ao(a.id)-ao(b.id))||(score(b)-score(a)));
+  return list;
+}
+
+/* ---------- filter bar (replaces the left sidebar + tabs) */
+const FDEF={
+  fridge:[{k:'styles',label:'Type',multi:1,opts:[['French Door','French Door'],['Side-by-Side','Side-by-Side'],['4-Door Flex','4-Door Flex'],['Top Freezer','Top Freezer']]},
+    {k:'depth',label:'Depth',opts:[['Counter Depth','Counter Depth'],['Full Depth','Full Depth']]},
+    {k:'maxPrice',label:'Price',opts:[[1500,'Under $1,500'],[2000,'Under $2,000'],[2500,'Under $2,500'],[3000,'Under $3,000']]},
+    {k:'minCap',label:'Capacity',opts:[[20,'20+ cu. ft.'],[25,'25+ cu. ft.'],[28,'28+ cu. ft.']]},
+    {k:'maxWidth',label:'Width',opts:[[33,'Fits 33" opening'],[36,'Fits 36" opening']]},
+    {k:'sale',label:'On sale',toggle:1}],
+  phone:[{k:'series',label:'Series',multi:1,opts:[['S series','Galaxy S'],['Z Fold','Galaxy Z Fold'],['Z Flip','Galaxy Z Flip'],['A series','Galaxy A'],['Certified Re-Newed','Certified Re-Newed']]},
+    {k:'stor',label:'Storage',opts:[['128GB','128GB'],['256GB','256GB'],['512GB','512GB'],['1TB','1TB']]},
+    {k:'maxPrice',label:'Price',opts:[[500,'Under $500'],[800,'Under $800'],[1000,'Under $1,000'],[1500,'Under $1,500']]},
+    {k:'minRating',label:'Rating',opts:[[4.5,'4.5 stars & up'],[4,'4 stars & up']]},
+    {k:'pen',label:'S Pen',toggle:1},{k:'sale',label:'On sale',toggle:1}],
+  tv:[{k:'tvType',label:'Type',multi:1,opts:TV_TYPES.map(t=>[t,t])},
+    {k:'size',label:'Screen size',opts:SIZEB.map(b=>[b[0],b[1]])},
+    {k:'res',label:'Resolution',opts:[['4K','4K'],['8K','8K'],['HD','HD / Full HD']]},
+    {k:'year',label:'Model year',opts:[[2026,'2026'],[2025,'2025'],[2024,'2024 and older']]},
+    {k:'maxPrice',label:'Price',opts:[[500,'Under $500'],[1000,'Under $1,000'],[2000,'Under $2,000'],[3000,'Under $3,000']]},
+    {k:'minRating',label:'Rating',opts:[[4.5,'4.5 stars & up'],[4,'4 stars & up']]},
+    {k:'sale',label:'On sale',toggle:1}],
+};
+FDEF.acc=[{k:'fits',label:'Fits',multi:1,opts:['Galaxy S26 Ultra','Galaxy S26+','Galaxy S26','Galaxy S26 FE','Galaxy Z Fold8 Ultra','Galaxy Z Fold8','Galaxy Z Flip8'].map(m=>[m,m])},
+  {k:'atype',label:'Type',multi:1,opts:[['case','Cases'],['screen protector','Screen protectors'],['S Pen','S Pens']]},
+  {k:'maxPrice',label:'Price',opts:[[30,'Under $30'],[50,'Under $50'],[80,'Under $80']]},
+  {k:'minRating',label:'Rating',opts:[[4.5,'4.5 stars & up'],[4,'4 stars & up']]},{k:'sale',label:'On sale',toggle:1}];
+const fdefs=()=>FDEF[S.cat]||[{k:'maxPrice',label:'Price',opts:[[100,'Under $100'],[300,'Under $300'],[500,'Under $500'],[1000,'Under $1,000']]},{k:'minRating',label:'Rating',opts:[[4.5,'4.5 stars & up'],[4,'4 stars & up']]},{k:'sale',label:'On sale',toggle:1}];
+const CATS=[['acc','Accessories','galaxy s26 ultra cases'],['fridge','Refrigerators','refrigerator'],['phone','Phones','galaxy phones'],['tv','TVs','tv'],['audio','Audio','galaxy buds'],['watch','Watches','galaxy watch'],['tablet','Tablets','tablet']];
+const SORTS={rel:'Relevance',low:'Price: Low to High',high:'Price: High to Low',rating:'Top Rated'};
+const caret='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>';
+function fval(d){const v=S.filters[d.k]; if(d.multi) return v?.length?v.map(x=>(d.opts.find(o=>o[0]===x)||[0,x])[1]).join(', '):null; if(d.toggle) return v?d.label:null; if(v==null) return null; const o=d.opts.find(o=>o[0]==v); return o?o[1]:d.k==='maxPrice'?'Under '+fmt0(v):d.k==='maxWidth'?`Fits ${v}" opening`:d.k==='minCap'?v+'+ cu. ft.':String(v)}
+function filterBar(){
+  const any=fdefs().some(fval);
+  return `<div class="fbar" role="toolbar" aria-label="Filters">
+    <button class="fbtn on" data-fmenu="cat">${CATS.find(c=>c[0]===S.cat)?.[1]||'All'} ${caret}</button>
+    <span class="fdiv"></span>
+    ${fdefs().map(d=>{const v=fval(d);return `<button class="fbtn ${v?'on':''}" ${d.toggle?`data-ftoggle="${d.k}"`:`data-fmenu="${d.k}"`}>${v&&S.aiKeys.has(d.k)?I.sparkLine:''}${esc(v||d.label)}${d.toggle?'':caret}</button>`}).join('')}
+    ${any?'<button class="linkbtn" id="clearAll">Clear all</button>':''}
+    <span class="fsp"></span>
+    <button class="fbtn plain" data-fmenu="sort">Sort <span class="sv">${SORTS[S.sort]}</span> ${caret}</button>
+  </div>`;
+}
+function openMenu(btn,key){
+  closeMenu();
+  let opts,multi=false,cur;
+  if(key==='sort'){opts=Object.entries(SORTS);cur=S.sort}
+  else if(key==='cat'){opts=CATS.map(c=>[c[0],c[1]]);cur=S.cat}
+  else {const d=fdefs().find(d=>d.k===key);opts=d.opts;multi=!!d.multi;cur=S.filters[key]}
+  const r=btn.getBoundingClientRect();
+  const m=document.createElement('div'); m.className='fmenu'; m.id='fmenu'; m.dataset.key=key; m.dataset.multi=multi?'1':'';
+  m.style.top=(r.bottom+6)+'px'; m.style.left=Math.max(8,Math.min(r.left,innerWidth-248))+'px';
+  m.innerHTML=(!multi&&key!=='sort'&&key!=='cat'?`<button data-fset="${key}" data-v="" class="${cur==null?'on':''}"><i></i>Any</button>`:'')+
+    opts.map(([v,l])=>{const on=multi?(cur||[]).includes(v):cur==v;return `<button data-fset="${key}" data-v="${esc(v)}" class="${on?'on':''} ${multi?'multi':''}"><i></i>${esc(l)}</button>`}).join('');
+  document.body.appendChild(m);
+}
+function closeMenu(){document.getElementById('fmenu')?.remove()}
+function setFilter(key,raw,multi){
+  if(key==='sort'){S.sort=raw;S.resShown=5;resnap();refresh();return}
+  if(key==='cat'){startSearch(CATS.find(c=>c[0]===raw)[2]);return}
+  const prev=clone(S.filters);
+  const v=raw!==''&&!isNaN(+raw)?+raw:raw;
+  if(multi){const a=S.filters[key]||[];S.filters[key]=a.includes(v)?a.filter(x=>x!==v):[...a,v]}
+  else S.filters[key]=raw===''?null:v;
+  S.aiKeys.delete(key); afterManual(prev);
+}
+function afterManual(prev){resnap();S.resShown=5;refresh();snack(`Showing ${visibleProducts().length} ${CAT_LABEL[S.cat]||'products'}`,()=>{S.filters=prev;resnap();refresh()})}
+function resnap(){const t=[...S.turns].reverse().find(t=>t.hasProducts&&!t.a.table);if(t){t.ids=visibleProducts().map(p=>p.id);t.shown=5;t.tags={...S.tags}}}
+function refresh(){const y=scrollY;renderSearch();scrollTo({top:y});renderDock();if(S.sheet) openAll()}
+function snap(t){
+  const a=t.a;
+  t.hasProducts=!(a.steps||a.handoff||a.reviews)&&!!(a.filters||a.picks?.length||a.kind==='mini'||a.ids);
+  t.ids=!t.hasProducts?[]:(a.ids||(a.table||a.kb?a.picks:null)||visibleProducts().map(p=>p.id));
+  t.shown=5; t.tags={...S.tags};
+}
+
+/* ---------- cards (measured from the samsung.com search results card) */
+const cmpBox=p=>`<label class="cmp"><input type="checkbox" data-cmp="${p.id}" ${S.compare.includes(p.id)?'checked':''}> Compare</label>`;
+const swHTML=p=>p.cols?.length?`<div class="sw">${p.cols.map(([n,h])=>`<i class="${n===p.color?'on':''}" title="${esc(n)}" style="background:${h}"></i>`).join('')}</div>`:'';
+const rtHTML=p=>p.reviews?`<div class="rt">${I.star}<span>${p.rating.toFixed(1)} (${p.reviews})</span></div>`:'';
+const priceHTML=p=>`<div class="price"><b>${fmt(p.price)}</b>${p.was?`<s>${fmt(p.was)}</s>`:''}</div>`;
+function cardHTML(p){
+  const tag=S.tags[p.id];
+  const opts=(p.opts||[]).map(d=>`<span class="opt ${d===p.osel?'on':''}">${esc(d)}</span>`).join('');
+  return `<article class="pcard" id="c-${p.id}">
+    <div class="im">${tag?`<span class="tag">${esc(tag)}</span>`:''}${art(p)}</div>
+    <div class="pc-tx">
+    <h3>${esc(p.name)}</h3>${p.sub?`<p class="sub">${esc(p.sub)}</p>`:''}
+    ${rtHTML(p)}
+    ${p.cols?.length?`<div class="clr">Color : ${esc(p.color)}</div>`:''}${swHTML(p)}
+    ${opts?`<div class="opts">${opts}</div>`:''}
+    ${priceHTML(p)}
+    <div class="sku">${esc(p.sku)}</div>
+    <div class="ctas"><button class="btn fill">Buy now</button><button class="btn">Learn more</button></div>
+    <div class="row"><a href="#" onclick="return false">Find support</a>${cmpBox(p)}</div>
+    </div>
+  </article>`;
+}
+function featHTML(p){
+  const tag=S.tags[p.id];
+  return `<article class="feat-card" id="c-${p.id}"><div class="im">${art(p)}</div><div class="fx">
+    ${tag?`<span class="tag">${esc(tag)}</span>`:''}<h3>${esc(p.name)}</h3>${p.sub?`<p class="sub">${esc(p.sub)}</p>`:''}
+    ${rtHTML(p)}${p.cols?.length?`<div class="clr">Color : ${esc(p.color)}</div>`:''}${swHTML(p)}
+    ${priceHTML(p)}${p.was?`<div class="save">Save ${fmt(p.was-p.price)}</div>`:''}
+    <div class="fbtns"><button class="btn fill">Buy now</button><button class="btn">Learn more</button></div>${cmpBox(p)}</div></article>`;
+}
+function mcardHTML(p,tag){
+  return `<article class="mcard"><div class="im">${tag?`<span class="tag">${esc(tag)}</span>`:''}${art(p)}</div>
+    <h4>${esc(p.name)}</h4>${p.sub?`<p class="sub">${esc(p.sub)}</p>`:p.color?'<p class="sub">'+esc(p.color)+'</p>':''}
+    ${rtHTML(p)}
+    ${priceHTML(p)}
+    <button class="btn fill">Buy now</button>${cmpBox(p)}</article>`;
+}
+function productsBlock(t,i){
+  if(!t.hasProducts) return '';
+  if(!t.ids.length) return `<div class="empty" style="margin-top:18px"><b>Nothing matches all of these filters.</b><br>Remove one above, or ask me for alternatives.</div>`;
+  const n=t.ids.length, sh=Math.min(t.shown,n);
+  return `<div class="prow-h"><b>${t.a.table?'In this comparison':t.a.popular?'Most popular':n<=5?`${n} match${n>1?'es':''}`:'Top 5 for you'}</b>${t.a.popular?'<span>Sorted by ratings and reviews</span>':''}${n>5?`<span>${sh} of ${n} shown</span>`:''}</div>
+    <div class="prow ${sh>5?'expanded':''}">${t.ids.slice(0,sh).map(id=>mcardHTML(byId[id],t.tags[id])).join('')}</div>
+    ${n>5?`<div class="prow-more">${sh<n?`<button class="btn" data-more="${i}">View ${Math.min(5,n-sh)} more</button>`:''}<button class="linkbtn" data-all="${i}">See all ${n} in a grid</button></div>`:''}`;
+}
+function resultsGrid(list,mode){
+  if(!list.length) return `<div class="empty" style="margin-top:12px"><b>No products match these filters.</b><br>Remove a filter, or ask Samsung AI for alternatives.</div>`;
+  const sh=Math.min(S.resShown,list.length);
+  const items=list.slice(0,sh).map((p,k)=>k===0&&mode==='feat'?featHTML(p):cardHTML(p)).join('');
+  return `<div class="rgrid ${mode}">${items}</div>${sh<list.length?`<div class="more"><button class="btn" data-resmore>View more (${list.length-sh})</button></div>`:''}`;
+}
+function supportList(){
+  return `<div class="support-list">${[['Galaxy Buds won\'t connect to my phone','Troubleshooting · Updated Sep 2026'],['How to reset your Galaxy Buds','How-to · Galaxy Buds4 Pro, Buds4, Buds FE'],['Get help with Galaxy Wearable','App support'],['Request a repair','Service']].map(([t,s])=>`<div class="sart"><b>${t}</b><span>${s}</span></div>`).join('')}</div>`;
+}
+
+/* ---------- answer pieces, shared by all three layouts */
+function md(s){return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}
+function plain(s){return (s||'').replace(/\*\*/g,'')}
+const titleQ=()=>S.query.replace(/\b\w/g,c=>c.toUpperCase());
+function restHTML(t,i,withProducts){
+  const a=t.a; let h='';
+  if(a.ask&&i===S.turns.length-1) h+=`<div class="clarify reveal"><b>${esc(a.ask.q)}</b><div class="copts">${a.ask.opts.map(([l,q])=>`<button class="copt" data-ask="${esc(q)}">${esc(l)}</button>`).join('')}</div></div>`;
+  if(a.bullets?.length) h+=`<ul class="bul reveal">${a.bullets.map(b=>`<li>${md(b)}</li>`).join('')}</ul>`;
+  if(a.steps) h+=`<ol class="stepper reveal">${a.steps.map((s,k)=>`<li class="${k===0?'cur':''}"><span class="n">${k+1}</span><div><b>${esc(s[0])}</b><p>${esc(s[1])}</p></div></li>`).join('')}</ol>${a.fixq?`<div class="fixq reveal">Did this fix it? <button class="btn" data-fix="yes">Yes</button><button class="btn" data-ask="Still not working">No, talk to support</button></div>`:''}`;
+  if(a.reviews) h+=`<div class="reviews reveal">${a.reviews.map(([k,v])=>`<div class="rv"><span>${k}</span><span class="bar"><i style="width:${v}%"></i></span><em>${v}%</em></div>`).join('')}</div><p class="note">Share of reviews that mention each topic positively.</p>${a.quote?`<blockquote class="quote reveal">"${esc(a.quote.t)}"<cite>${esc(a.quote.c)}</cite></blockquote>`:''}`;
+  if(a.table) h+=`<div class="spec-wrap reveal"><table class="spec"><thead><tr><th></th>${a.table.head.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${a.table.rows.map(([k,vals,win])=>`<tr><th>${k}</th>${vals.map((v,j)=>`<td class="${win[j]&&vals.length>1?'win':''}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  if(a.handoff) h+=`<div class="handoff reveal"><span class="av">S</span><div class="tx"><b>Samsung Specialist</b><span>Usually replies in under 2 minutes · 8am–12am ET</span></div><div class="act"><button class="btn fill" data-toast="Chat opened with your conversation attached">Start chat</button><button class="btn" data-toast="Call 1-800-SAMSUNG (1-800-726-7864)">Call us</button></div></div>`;
+  if(S.layout==='answer'&&a.picks?.length) h+=`<div class="picks-h reveal">${a.table?'In this comparison':'Top picks for you'}</div><div class="picks reveal">${a.picks.map(id=>{const p=byId[id];return `<button class="pick" data-goto="${id}"><span class="im">${art(p)}</span><span><span class="tag">${esc((a.tags||{})[id]||'Pick')}</span><h4>${esc(p.name)}</h4><p class="why">${esc(p.sub||p.color)}</p><span class="pr">${fmt(p.price)}${p.was?`<s>${fmt(p.was)}</s>`:''}</span></span></button>`}).join('')}</div>`;
+  if(S.layout==='split'&&t.hasProducts&&t.ids.length) h+=`<button class="reslink reveal" data-pane="res">${I.sparkLine}<span><b>${t.ids.length} ${CAT_LABEL[S.cat]||'products'}</b> updated in results</span></button>`;
+  if(withProducts) h+=`<div class="reveal">${productsBlock(t,i)}</div>`;
+  if(a.sources?.length) h+=`<div class="src reveal"><b>Sources</b>${a.sources.map(s=>{const o=srcLink(s);return `<a href="${esc(o.u)}" target="_blank" rel="noopener" title="${esc(o.u)}">${esc(o.t)}</a>`}).join('')}</div>`;
+  h+=`<div class="foot reveal"><span>Was this helpful?</span><button class="thumb" data-thumb="up" aria-label="Helpful">${I.thumbUp}</button><button class="thumb" data-thumb="down" aria-label="Not helpful">${I.thumbDn}</button>${S.layout!=='split'?'<span>AI answers can make mistakes. Prices and offers come from samsung.com.</span>':''}</div>`;
+  return h;
+}
+function nextHTML(a){
+  return `${a.chips?.length?`<h5>Ask next</h5><div class="chips">${a.chips.map(c=>`<button class="chip" data-ask="${esc(c)}">${I.sparkLine}${esc(c)}</button>`).join('')}</div>`:''}
+    <div class="human">Need a person? <button class="linkbtn" data-ask="Talk to a specialist">Chat with a Samsung specialist</button></div>`;
+}
+function fillTurn(t,i,ansEl,nextEl,withProducts,animate){
+  const a=t.a;
+  const done=()=>{ansEl.innerHTML=`<p class="lead">${md(a.lead||'')}</p>`+restHTML(t,i,withProducts); if(nextEl) nextEl.innerHTML=i===S.turns.length-1?nextHTML(a):''};
+  if(!animate||reduce||t.painted||t.animating){ if(t.animating){t.cancel=true;t.animating=false;S.busy=false} t.painted=true; done(); return }
+  t.animating=true; S.busy=true; renderDock();
+  const steps=a.think||[];
+  ansEl.innerHTML=`<div class="lin"><i></i></div><div class="thinking">${steps.map(s=>`<div class="think" style="visibility:hidden"><span class="dot"></span>${esc(s)}</div>`).join('')}</div>`;
+  if(nextEl) nextEl.innerHTML='';
+  const nodes=[...ansEl.querySelectorAll('.think')]; let k=0;
+  const keepDown=()=>{const th=document.getElementById('spThread'); if(th) th.scrollTop=th.scrollHeight};
+  const tick=()=>{ if(t.cancel) return; nodes.forEach((n,j)=>{if(j<=k) n.style.visibility='visible'}); if(k>0) nodes[k-1].classList.add('done'); keepDown(); if(k<nodes.length){k++;setTimeout(tick,430)} else setTimeout(stream,180) };
+  tick();
+  function stream(){
+    if(t.cancel) return;
+    const words=(a.lead||'').split(' '); let w=0;
+    ansEl.innerHTML=`<p class="lead"><span class="st"></span><span class="cursor"></span></p>`;
+    const st=ansEl.querySelector('.st');
+    const iv=setInterval(()=>{
+      if(t.cancel){clearInterval(iv);return}
+      w+=2; st.innerHTML=md(words.slice(0,w).join(' ')); keepDown();
+      if(w>=words.length){clearInterval(iv); t.animating=false; t.painted=true; S.busy=false; done(); keepDown(); renderDock();
+        if(t.filtersChanged&&S.layout!=='chat'&&t.hasProducts) snack(`Results updated to ${visibleProducts().length} ${CAT_LABEL[S.cat]||'products'}`,()=>{S.filters=t.prevFilters;resnap();refresh()});}
+    },45);
+  }
+}
+function fillAll(){
+  const last=S.turns.length-1;
+  S.turns.forEach((t,i)=>{const a=document.querySelector(`[data-ans="${i}"]`); if(!a) return; fillTurn(t,i,a,document.querySelector(`[data-next="${i}"]`),S.layout==='chat',i===last)});
+}
+
+/* ---------- layout A: conversation-first */
+function turnBlock(t,i){
+  return `<div class="turn" id="turn-${i}"><div class="ubub">${esc(t.q)}</div>
+    <div class="abub"><div class="who">${I.spark} Samsung AI${i===0?' <span class="beta">Beta</span>':''}</div><div class="ans" data-ans="${i}"></div><div class="next" data-next="${i}"></div></div></div>`;
+}
+function railHTML(){
+  const n=S.turns.length; if(n<2) return '';
+  const kind=a=>a.table?'Comparison':a.steps?'Help':a.ask&&!a.picks?.length?'Follow-up question':a.picks?.length?'Products':'Answer';
+  return `<nav class="toc ${S.tocOpen?'open':''}" aria-label="Questions in this conversation">
+    <button class="toc-btn" id="tocBtn" aria-expanded="${!!S.tocOpen}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span id="tocCnt">${n}</span></button>
+    <div class="toc-ticks">${S.turns.map((t,i)=>`<button class="toc-t" data-jump="${i}" aria-label="Question ${i+1}: ${esc(t.q)}"><i></i></button>`).join('')}</div>
+    <div class="toc-panel"><div class="toc-h"><b>This conversation</b><span>${n} questions</span></div>
+    ${S.turns.map((t,i)=>`<button class="toc-i" data-jump="${i}"><span class="toc-n">${i+1}</span><span class="toc-q">${esc(t.q)}</span><span class="toc-k">${kind(t.a)}</span></button>`).join('')}</div></nav>`;
+}
+function updRail(){
+  const r=document.querySelector('.toc'); if(!r) return;
+  const turns=[...document.querySelectorAll('.thread .turn')]; const mid=innerHeight*.4; let cur=0;
+  turns.forEach((el,i)=>{if(el.getBoundingClientRect().top<mid) cur=i});
+  r.querySelectorAll('[data-jump]').forEach(b=>b.classList.toggle('on',+b.dataset.jump===cur));
+  const c=document.getElementById('tocCnt'); if(c) c.textContent=`${cur+1} of ${turns.length}`;
+}
+function chatPage(){
+  if(!S.turns.length) return `<div class="ctop"><div class="wrap"><div class="ctitle"><span><b>New search</b></span></div></div></div>
+    <div class="wrap"><div class="fresh">${I.spark}<h2>What are you looking for?</h2><p>Ask about any Samsung product, compare models, or get help with something you own.</p>
+    <div class="copts">${[['Refrigerators','refrigerator'],['Compare Z Fold8 and S26 Ultra','compare Z Fold8 and S26 Ultra'],['TVs for a bright room','TV for a bright room'],['Phones with a great camera','phones with the best camera'],['My Galaxy Buds won\'t connect',"my galaxy buds won't connect"]].map(([l,q])=>`<button class="copt" data-run="${esc(q)}">${esc(l)}</button>`).join('')}</div></div></div>`;
+  return `${railHTML()}<div class="ctop"><div class="wrap">
+      <div class="ctitle"><span>Results for <b>"${esc(S.query)}"</b></span><span class="tools"><span class="tip"><button class="ibtn" id="aiInfo" aria-label="About Samsung AI answers" style="padding:2px">${I.info}</button></span><button class="linkbtn" id="newChat">New search</button></span></div>
+      ${filterBar()}</div></div>
+    <div class="wrap"><div class="thread">${S.turns.map(turnBlock).join('')}</div></div>`;
+}
+
+function renderSearch(){
+  app.innerHTML=chatPage();
+  app.dataset.layout=S.layout;
+  fillAll(); setTop(); updRail();
+  const th=document.getElementById('spThread'); if(th) th.scrollTop=th.scrollHeight;
+}
+function render(){ if(S.view==='home') renderHome(); else renderSearch(); renderDock(); markLayout() }
+function setTop(){const g=document.querySelector('.gnb'),p=document.querySelector('.proto');document.documentElement.style.setProperty('--gnbh',g.offsetHeight+'px');document.documentElement.style.setProperty('--toph',(g.offsetHeight+p.offsetHeight)+'px')}
+function markLayout(){document.querySelectorAll('[data-layout]').forEach(b=>b.classList.toggle('on',b.dataset.layout===S.layout))}
+
+/* ---------- dock: compare tray + composer */
+function askFormHTML(){
+  return `<form class="ask" id="askForm">${I.spark}<input id="askIn" autocomplete="off" placeholder="${S.turns.length?'Ask a follow-up question':'Ask anything about Samsung products'}" aria-label="Ask Samsung AI" value="${esc(S.draft)}"><button type="button" class="mic" aria-label="Voice input">${I.mic}</button><button class="send ${S.draft?'ready':''}" aria-label="Send" ${S.busy?'disabled':''}>${I.up}</button></form>`;
+}
+function renderDock(){
+  if(S.view!=='search'){dock.hidden=true;return}
+  dock.hidden=false;
+  const cmp=S.compare.map(id=>byId[id]);
+  const tray=cmp.length?`<div class="tray"><div class="th">${cmp.map(p=>`<span>${art(p)}</span>`).join('')}</div><div class="tt"><b>${cmp.length} of 3 selected</b>${cmp.length>1?'Ready to compare side by side':'Add one more to compare'}</div><button class="linkbtn" id="cmpClear">Clear</button><button class="btn fill" id="cmpGo" ${cmp.length<2?'disabled style="opacity:.4"':''}>Compare</button></div>`:'';
+  if(S.layout==='split'){ dock.innerHTML=tray; dock.classList.add('right'); const s=document.querySelector('.sp-ask .send'); if(s) s.disabled=S.busy; return }
+  dock.classList.remove('right');
+  const focused=document.activeElement?.id==='askIn';
+  dock.innerHTML=`${tray}${askFormHTML()}<div class="disc">Prototype: answers come from samsung.com pages crawled Oct 2026. Prices are snapshots.</div>`;
+  if(focused) document.getElementById('askIn')?.focus();
+}
+
+/* ---------- see-all sheet */
+function openAll(){
+  S.sheet=true; const list=visibleProducts();
+  layer.innerHTML=`<div class="ns-scrim" data-close-pop></div><aside class="rs" role="dialog" aria-label="All results">
+    <div class="rs-head"><div><b>All ${list.length} ${CAT_LABEL[S.cat]||'products'}</b><span>Filtered by your conversation</span></div><button class="ibtn" data-close-pop aria-label="Close">${I.close}</button></div>
+    ${filterBar()}<div class="rgrid three">${list.map(cardHTML).join('')}</div></aside>`;
+}
+
+/* ---------- actions */
+function startSearch(q){
+  closePop();
+  S.turns.forEach(t=>{if(t.animating){t.cancel=true;t.animating=false}}); S.busy=false;
+  S.query=q; S.turns=[]; S.tags={}; S.lastPicks=null; S.compare=[]; S.sort='rel'; S.aiCollapsed=false;
+  S.filters=EMPTY(); S.aiKeys=new Set(); S.resShown=5; S.pane='chat'; S.draft='';
+  S.cat=detectCat(fixTypos(q.toLowerCase()))||null;
+  S.view='search'; scrollTo({top:0});
+  ask(q,true);
+}
+function newSearch(){
+  S.turns.forEach(t=>{if(t.animating){t.cancel=true;t.animating=false}}); S.busy=false;
+  S.query=''; S.turns=[]; S.tags={}; S.lastPicks=null; S.compare=[]; S.sort='rel'; S.filters=EMPTY(); S.aiKeys=new Set(); S.draft=''; S.cat=null;
+  S.view='search'; render(); scrollTo({top:0}); document.getElementById('askIn')?.focus();
+}
+function ask(q,isInitial){
+  if(S.busy) return;
+  if(!KB.ready){S.view='search'; dock.hidden=true; app.innerHTML=`<div class="wrap" style="padding-block:48px 400px"><div class="think"><span class="dot"></span>Loading samsung.com knowledge base</div></div>`; KB.wait.then(()=>ask(q,isInitial)); return}
+  const a=respond(q);
+  const prev=clone(S.filters);
+  if(a.cat&&a.cat!==S.cat){S.cat=a.cat;S.filters=EMPTY();S.tags={};S.aiKeys=new Set()}
+  if(a.filters){
+    const nf={...S.filters,...a.filters,styles:a.filters.styles||S.filters.styles||[]};
+    for(const k of Object.keys(a.filters)){const v=nf[k]; if(k!=='aiIds'&&k!=='people'&&v!=null&&!(Array.isArray(v)&&!v.length)&&JSON.stringify(v)!==JSON.stringify(prev[k])) S.aiKeys.add(k)}
+    S.filters=nf;
+  }
+  if(a.picks?.length){S.lastPicks=a.picks;S.tags={...(a.tags||{})}}
+  const t={q,a,prevFilters:prev}; snap(t);
+  t.filtersChanged=JSON.stringify(prev)!==JSON.stringify(S.filters);
+  S.turns.push(t); S.aiCollapsed=false; S.resShown=5;
+  if(S.layout==='split') S.pane='chat';
+  S.view='search'; renderSearch(); renderDock(); markLayout();
+  if(!isInitial&&S.layout==='chat') document.getElementById('turn-'+(S.turns.length-1))?.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+  if(!isInitial&&S.layout==='answer') document.getElementById('ai')?.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+}
+let snackT;
+function snack(msg,undo){
+  document.querySelectorAll('.snack').forEach(s=>s.remove());
+  const d=document.createElement('div'); d.className='snack'; d.setAttribute('role','status');
+  d.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>Undo</button>':''}`;
+  if(undo) d.querySelector('button').onclick=()=>{undo();d.remove()};
+  document.body.appendChild(d); clearTimeout(snackT); snackT=setTimeout(()=>d.remove(),4500);
+}
+
+/* search popup: same layout as samsung.com today */
+const SUGG = ['Galaxy Watch9, 40mm, LTE, Cream','Galaxy Watch9, 44mm, LTE, Graphite','Galaxy Watch Ultra2','Galaxy S26 Ultra','Galaxy Z Fold8 Ultra','Galaxy Z Fold8','Galaxy Buds4 Pro','Galaxy Tab S12 Ultra','Refrigerator','Refrigerator French Door','Refrigerator Counter Depth','Refrigerator Side-by-Side','OLED TV','OLED TV 77 inch'];
+function openPop(){
+  layer.innerHTML=`<div class="pop-scrim" data-close-pop></div><div class="pop" role="dialog" aria-label="Search"><div class="wrap">
+    <form class="pop-head" id="popForm">${I.search}<input id="popIn" placeholder="Search" autocomplete="off" aria-label="Search"><button type="button" class="clr-btn" id="popClear" hidden>Clear</button><button type="button" class="ibtn" data-close-pop aria-label="Close search">${I.close}</button></form>
+    <div class="pop-body" id="popBody"></div></div></div>`;
+  popBody('');
+  setTimeout(()=>document.getElementById('popIn').focus(),30);
+}
+function popBody(v){
+  const b=document.getElementById('popBody'); if(!b) return;
+  const cl=document.getElementById('popClear'); if(cl) cl.hidden=!v;
+  const card=(p,price,one)=>`<button class="rec ${one?'one':''}" data-q="${esc(p.name.toLowerCase())}"><span class="im">${art(p)}</span><b>${esc(p.name)}</b><span>${fmt(price??p.price)}</span></button>`;
+  if(!v){
+    const recs=[[byId.p1,1399.99],[byId.b1],[byId.w1],[byId.t1]];
+    b.innerHTML=`<div><p class="eyebrow">Recent searches</p><button class="recent" data-q="galaxy z fold8 ultra">Galaxy Z Fold8 Ultra <i>✕</i></button>
+      <p class="eyebrow">Popular searches</p><ul class="plist">${['Galaxy Z Fold8 Ultra','Galaxy Z Fold8','Galaxy Z Flip8','Galaxy Watch9'].map(s=>`<li><button data-q="${esc(s.toLowerCase())}">${s}</button></li>`).join('')}</ul></div>
+      <div><p class="eyebrow">Recommended</p><div class="recs">${recs.map(([p,pr])=>card(p,pr,1)).join('')}</div></div>`;
+    return;
+  }
+  const lv=v.toLowerCase().trim();
+  const hits=SUGG.filter(s=>s.toLowerCase().includes(lv)).slice(0,5);
+  const isQ = lv.split(/\s+/).length>=3 || /\?|best|which|vs|how|what|for /.test(lv);
+  const hl=s=>{const i=s.toLowerCase().indexOf(lv);return i<0?esc(s):esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+lv.length))+'</mark>'+esc(s.slice(i+lv.length))};
+  const words=lv.split(/\s+/);
+  const rel=P.filter(p=>words.every(w=>p.name.toLowerCase().includes(w))||detectCat(lv)===p.cat).sort((x,y)=>score(y)-score(x)).slice(0,4);
+  b.innerHTML=`<div><p class="eyebrow tc">Suggested Searches</p><ul class="sugg">
+    ${isQ?`<li><button data-q="${esc(v)}" class="ask">${I.sparkLine}<span>Ask Samsung AI: ${esc(v)}</span></button></li>`:''}
+    ${hits.map(s=>`<li><button data-q="${esc(s.toLowerCase())}"><span>${hl(s)} <span class="in">in Products</span></span></button></li>`).join('')}
+    ${!isQ&&!hits.length?`<li><button data-q="${esc(v)}"><span><mark>${esc(v)}</mark> <span class="in">in Products</span></span></button></li>`:''}
+  </ul></div>${rel.length?`<div><p class="eyebrow">Related products</p><div class="recs">${rel.map(p=>card(p)).join('')}</div></div>`:''}`;
+}
+function closePop(){layer.innerHTML='';S.sheet=false}
+
+/* design notes */
+function openNotes(){
+  layer.innerHTML=`<div class="ns-scrim" data-close-pop></div><aside class="ns" role="dialog" aria-label="Design notes">
+  <button class="ibtn x" data-close-pop aria-label="Close">${I.close}</button>
+  <h2>Design notes</h2>
+  <p>A conversational layer for the samsung.com search page. The GNB search popup stays exactly as it is today. The AI lives on the results page, above the grid shoppers already know, and every answer updates the grid underneath it.</p>
+  <h3>The search page is a conversation</h3>
+  <p>Filters sit in a bar at the top, with a set for each category (series, storage and S Pen for phones; type, size, resolution and year for TVs). Filters the AI sets are marked with a sparkle, and changing one by hand updates the latest answer's products. Broad searches like "refrigerator" or "tv" get a short question with tap answers instead of a guess, and the cards underneath are labelled "Most popular". Product cards appear when the question is about products, and general how-to answers stay text-only.</p>
+  <h3>Where the answers come from</h3>
+  <p>The prototype loads a knowledge base crawled from samsung.com in October 2026: ${KB.products.length||372} product pages, ${KB.faqs.length||665} FAQs and ${KB.chunks.length||'7,500+'} passages from support articles and buying guides. Questions are matched to passages with keyword ranking (BM25). The answer quotes the best passage and links every page it used. If no page covers the question, it says so instead of guessing. Shopping requests are ranked on the data: refrigerator dimensions and capacities, phone screen, camera, battery and weight from samsung.com spec pages, and TV type, size and resolution. Comparisons pick up every model named (up to four). In production this would be an embedding index plus an LLM that writes from the retrieved passages, with prices read live from samsung.com.</p>
+  <h3>How conversational product search works</h3>
+  <ol>
+    <li><b>Understand intent.</b> Classify the query: a product name (navigational), a need ("fridge for a family of 5"), a comparison, or a support problem.</li>
+    <li><b>Retrieve.</b> Pull matching products, specs, offers, reviews and support articles from the samsung.com catalog and knowledge base.</li>
+    <li><b>Ground and answer.</b> Write a short answer only from what was retrieved. Prices and offers are inserted from live data, never generated.</li>
+    <li><b>Render as UI.</b> Turn the answer into Samsung components: product picks, spec rows, steppers, filter chips.</li>
+    <li><b>Refine.</b> Each follow-up keeps context and updates both the answer and the filtered results.</li>
+  </ol>
+  <h3>What we took from the best examples</h3>
+  <div class="tw"><table><tr><th>Who</th><th>Pattern</th><th>Here</th></tr>
+  <tr><td>Google AI Mode</td><td>Answer first, visible reasoning steps, cited sources, follow-up box, comparison tables</td><td>Thinking steps, Sources row, pinned ask bar, spec table</td></tr>
+  <tr><td>Amazon Rufus</td><td>Lives inside normal search, suggested questions, review summaries, compare</td><td>"Ask next" chips, review breakdown, grid stays below</td></tr>
+  <tr><td>Shop / Shopify</td><td>Natural language turned into filters; products shown inside the answer</td><td>"Set from your conversation" filter chips, Top picks</td></tr>
+  <tr><td>Best Buy, Walmart</td><td>Hand off to a person with context; AI disclosure</td><td>Specialist card, Beta label and info tooltip</td></tr>
+  </table></div>
+  <h3>Rules this prototype follows</h3>
+  <ul>
+    <li><b>Match the query.</b> A product name like "galaxy s26 ultra" gets the normal results, with the ask bar ready if they want help. Needs, comparisons and problems get a full answer.</li>
+    <li><b>One source of truth.</b> AI filters show up as removable chips and in the left filter panel. Undo is always one tap away.</li>
+    <li><b>Never a dead end.</b> Every answer ends with next questions and a way to reach a person.</li>
+    <li><b>Disclose.</b> A Beta label, an info tooltip, and a line under the ask bar.</li>
+  </ul>
+  <h3>Samsung components used</h3>
+  <div class="tw"><table><tr><th>Need</th><th>Component</th></tr>
+  <tr><td>Results tabs</td><td>Tab / Standard / Primary</td></tr>
+  <tr><td>Pick labels</td><td>Tag / badge</td></tr>
+  <tr><td>Comparison</td><td>Spec / Standard, white and gray rows</td></tr>
+  <tr><td>Support steps</td><td>Stepper (current step in #006BEA)</td></tr>
+  <tr><td>Thinking</td><td>Progress / Linear in #2189FF</td></tr>
+  <tr><td>Results changed</td><td>Snackbar with Undo</td></tr>
+  <tr><td>AI disclosure</td><td>Tooltip / Marked, white</td></tr>
+  <tr><td>Buttons</td><td>39px, 20px radius, filled and outlined</td></tr>
+  </table></div>
+  <h3>New components this needs</h3>
+  <p>Ask bar, answer container, thinking indicator, source chip, feedback control, history row. Everything else already exists in the design system.</p>
+  <p style="color:var(--gray-text);font-size:12px">Products and prices are mocked from samsung.com in October 2026. Product images are drawn placeholders because live images can't load here. Fonts fall back to Outfit and Noto Sans when SamsungOne and Samsung Sharp Sans aren't installed.</p>
+  </aside>`;
+}
+
+/* ------------------------------------------------------------------ events */
+document.addEventListener('click',e=>{
+  if(e.target.closest('#popClear')){const i=document.getElementById('popIn'); i.value=''; popBody(''); i.focus(); return}
+  const menu=document.getElementById('fmenu');
+  if(menu&&!e.target.closest('#fmenu')&&!e.target.closest('[data-fmenu]')) closeMenu();
+  const t=e.target.closest('button,[data-close-pop],label,input'); if(!t) return;
+  if(t.matches('[data-run]')){const v=t.dataset.run; if(v==='home'){closePop();S.view='home';render();scrollTo({top:0});setTimeout(openPop,250)} else startSearch(v); return}
+  if(t.id==='openNotes'){openNotes();return}
+  if(t.id==='logo'){closePop();go('home');return}
+  if(t.id==='openSearch'){openPop();return}
+  if(t.matches('[data-close-pop]')){closePop();return}
+  if(t.matches('[data-q]')){startSearch(t.dataset.q);return}
+  if(t.matches('[data-ask]')){if(S.busy)return; closePop(); ask(t.dataset.ask); return}
+  if(t.matches('[data-fmenu]')){const k=t.dataset.fmenu; if(menu&&menu.dataset.key===k){closeMenu();return} openMenu(t,k); return}
+  if(t.matches('[data-fset]')){const multi=!!t.parentElement.dataset.multi, key=t.dataset.fset; setFilter(key,t.dataset.v,multi); if(!multi) closeMenu(); else {const b=document.querySelector(`[data-fmenu="${key}"]`); if(b) openMenu(b,key)} return}
+  if(t.matches('[data-ftoggle]')){const k=t.dataset.ftoggle,prev=clone(S.filters); S.filters[k]=S.filters[k]?null:true; S.aiKeys.delete(k); afterManual(prev); return}
+  if(t.id==='clearAll'){const prev=clone(S.filters); S.filters=EMPTY(); S.aiKeys=new Set(); afterManual(prev); return}
+  if(t.matches('[data-more]')){S.turns[+t.dataset.more].shown+=5; refresh(); return}
+  if(t.matches('[data-all]')){openAll(); return}
+  if(t.matches('[data-resmore]')){S.resShown+=5; refresh(); return}
+  if(t.matches('[data-pane]')){S.pane=t.dataset.pane; renderSearch(); renderDock(); scrollTo({top:0}); return}
+  if(t.matches('[data-goto]')){const el=document.getElementById('c-'+t.dataset.goto); if(el){el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1600)} return}
+  if(t.matches('[data-h]')){const turn=S.turns[+t.dataset.h]; snack(`Earlier answer: ${plain(turn.a.lead).slice(0,110)}…`); return}
+  if(t.id==='newChat'){newSearch();return}
+  if(t.id==='tocBtn'){S.tocOpen=!S.tocOpen;document.querySelector('.toc')?.classList.toggle('open',S.tocOpen);t.setAttribute('aria-expanded',S.tocOpen);return}
+  if(t.matches('[data-jump]')){S.tocOpen=false;document.querySelector('.toc')?.classList.remove('open');t.blur();document.getElementById('turn-'+t.dataset.jump)?.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});return}
+  if(t.id==='collapseAI'){S.aiCollapsed=true; refresh(); return}
+  if(t.id==='expandAI'){S.aiCollapsed=false; S.turns[S.turns.length-1].painted=true; refresh(); return}
+  if(t.id==='aiInfo'){const w=t.parentElement; const ex=w.querySelector('.tip-box'); if(ex){ex.remove();return} w.insertAdjacentHTML('beforeend',`<div class="tip-box">Samsung AI answers from samsung.com product pages, specs, reviews and support articles. It can make mistakes, so check details on the product page. Prices and offers are always pulled live.</div>`); return}
+  if(t.matches('[data-thumb]')){t.parentElement.querySelectorAll('.thumb').forEach(b=>b.classList.remove('on')); t.classList.add('on'); snack(t.dataset.thumb==='up'?'Thanks for the feedback':'Thanks. Tell us what was wrong in the ask bar.'); return}
+  if(t.matches('[data-toast]')){snack(t.dataset.toast);return}
+  if(t.matches('[data-fix]')){snack('Great. Glad that fixed it.');return}
+  if(t.id==='cmpClear'){S.compare=[]; refresh(); return}
+  if(t.id==='cmpGo'){ask('Compare these');return}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.matches('[data-cmp]')){const id=t.dataset.cmp; if(t.checked){if(S.compare.length>=3){t.checked=false;snack('You can compare up to 3 products');return} S.compare.push(id)} else S.compare=S.compare.filter(x=>x!==id); document.querySelectorAll(`[data-cmp="${id}"]`).forEach(c=>c.checked=t.checked); renderDock(); return}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='popIn') popBody(e.target.value);
+  if(e.target.id==='askIn'){S.draft=e.target.value; e.target.form.querySelector('.send').classList.toggle('ready',!!S.draft.trim())}
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(e.target.id==='popForm'){const v=document.getElementById('popIn').value.trim(); if(v) startSearch(v)}
+  if(e.target.id==='askForm'){const v=S.draft.trim(); if(!v||S.busy) return; S.draft=''; if(!S.turns.length) startSearch(v); else ask(v)}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePop();closeMenu()}});
+addEventListener('scroll',()=>{closeMenu();updRail()},{passive:true});
+addEventListener('resize',()=>{closeMenu(); if(S.view==='search') setTop()});
+
+render();
+setTimeout(()=>{if(S.view==='home'&&!layer.innerHTML) openPop()},600);
+</script>
